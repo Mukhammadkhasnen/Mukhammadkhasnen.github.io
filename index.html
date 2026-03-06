@@ -264,14 +264,47 @@
     .hero-cta:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(192,57,91,0.45); }
 
     /* ================================================================
-       PAGE: LETTER
+       PAGE: LETTER — her images + your reply letter
     ================================================================ */
     #page-letter { background:linear-gradient(135deg,#fff0f4,#fdf6f0); align-items:flex-start; }
+
+    /* Her 6 images displayed as a soft gallery above the letter */
+    .her-images-wrap {
+      width:100%; margin-bottom:36px;
+    }
+    .her-images-label {
+      font-family:'Cormorant Garamond',serif; font-size:1rem; font-style:italic;
+      color:#a06070; text-align:center; margin-bottom:16px; letter-spacing:0.06em;
+    }
+    .her-images-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+    }
+    .her-img {
+      width:100%; aspect-ratio:1/1; object-fit:cover;
+      border-radius:10px; border:2px solid #f2c0cf;
+      box-shadow:0 4px 20px rgba(192,57,91,0.1);
+      transition:transform 0.3s, box-shadow 0.3s;
+      cursor:pointer;
+    }
+    .her-img:hover { transform:scale(1.04); box-shadow:0 8px 30px rgba(192,57,91,0.2); }
+
+    /* Lightbox for tapping images */
+    #imgLightbox {
+      display:none; position:fixed; inset:0; z-index:800;
+      background:rgba(0,0,0,0.88); align-items:center; justify-content:center;
+    }
+    #imgLightbox.show { display:flex; }
+    #imgLightbox img { max-width:92vw; max-height:88vh; border-radius:10px; box-shadow:0 0 60px rgba(0,0,0,0.6); }
+    #imgLightbox .lb-close { position:absolute; top:20px; right:24px; font-size:2rem; color:white; cursor:pointer; opacity:0.7; }
+    #imgLightbox .lb-close:hover { opacity:1; }
+
+    /* Letter card — same format as hers */
     .letter-card {
       background:white; border:1px solid #f2c0cf; border-radius:6px;
       width:100%; padding:56px 52px;
       box-shadow:0 8px 60px rgba(192,57,91,0.08); position:relative;
-      animation:none;
     }
     .letter-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--rose),var(--gold),var(--rose)); }
     .letter-stamp { position:absolute; top:-18px; right:32px; background:var(--rose); color:white; font-family:'Cormorant Garamond',serif; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; padding:4px 14px; border-radius:2px; }
@@ -280,8 +313,74 @@
     .letter-signature { font-family:'Cormorant Garamond',serif; font-size:1.7rem; font-style:italic; color:var(--gold); margin-top:32px; }
 
     /* ================================================================
-       PAGE: REASONS
+       PAGE: PROMISE — image slot at the bottom
     ================================================================ */
+    #page-promise {
+      background:linear-gradient(160deg,var(--rose),var(--rose-dark));
+      align-items:center; text-align:center;
+    }
+    #page-promise .page-inner { display:flex; flex-direction:column; align-items:center; gap:24px; }
+    .promise-h { font-family:'Cormorant Garamond',serif; font-size:clamp(2rem,5vw,3.4rem); font-weight:300; color:white; line-height:1.25; }
+    .promise-p { font-size:1rem; max-width:460px; line-height:1.95; color:rgba(255,255,255,0.88); }
+    .promise-btn { background:white; color:var(--rose); border:none; padding:16px 40px; border-radius:40px; font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-style:italic; cursor:pointer; transition:all 0.2s; box-shadow:0 6px 30px rgba(0,0,0,0.15); }
+    .promise-btn:hover { transform:scale(1.06); box-shadow:0 10px 40px rgba(0,0,0,0.25); }
+    .promise-hearts { font-size:2rem; letter-spacing:8px; animation:hb 1.4s ease-in-out infinite; }
+
+    /* ✏️ HER PHOTO — portrait tribute on the Promise page */
+    .her-photo-section {
+      width:100%; display:flex; flex-direction:column; align-items:center; gap:16px;
+      padding-top:8px;
+    }
+    .her-photo-label {
+      font-family:'Cormorant Garamond',serif; font-size:1.05rem; font-style:italic;
+      color:rgba(255,255,255,0.75); text-align:center; letter-spacing:0.04em;
+    }
+
+    /* Portrait frame — tall, like a phone photo of her */
+    .her-photo-frame {
+      position:relative; width:100%; max-width:320px;
+      border-radius:20px; overflow:hidden;
+      box-shadow:0 20px 60px rgba(0,0,0,0.4), 0 0 0 3px rgba(255,255,255,0.12);
+    }
+    .her-photo-img {
+      width:100%; display:block;
+      aspect-ratio:3/4;          /* portrait ratio — tall photo of her */
+      object-fit:cover;
+      object-position:center top; /* keeps her face in frame */
+    }
+    /* Soft rose glow at the bottom of the photo */
+    .her-photo-glow {
+      position:absolute; bottom:0; left:0; right:0; height:40%;
+      background:linear-gradient(to top, rgba(192,57,91,0.35), transparent);
+      pointer-events:none;
+    }
+
+    /* Caption below her photo */
+    .her-photo-caption {
+      text-align:center; line-height:1.7;
+    }
+    .her-photo-caption em {
+      font-family:'Cormorant Garamond',serif; font-size:1.8rem;
+      font-style:italic; color:white; display:block;
+    }
+    .her-photo-caption span {
+      font-size:0.88rem; color:rgba(255,255,255,0.65);
+      letter-spacing:0.06em;
+    }
+
+    /* Placeholder styling */
+    .her-photo-placeholder {
+      width:100%; max-width:320px;
+      aspect-ratio:3/4;
+      background:rgba(255,255,255,0.05);
+      border:2px dashed rgba(255,255,255,0.2);
+      border-radius:20px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:10px; padding:32px 20px; text-align:center;
+    }
+    .php-icon  { font-size:2.5rem; }
+    .php-text  { color:rgba(255,255,255,0.5); font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-style:italic; }
+    .php-hint  { color:rgba(255,255,255,0.25); font-size:0.72rem; line-height:1.6; }
     #page-reasons { background:linear-gradient(160deg,#fdf6f0,#fff5f8); align-items:flex-start; }
     .reasons-title { font-family:'Cormorant Garamond',serif; font-size:clamp(1.8rem,4vw,2.8rem); font-weight:300; color:var(--rose); margin-bottom:40px; text-align:center; }
     .reasons-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:18px; }
@@ -291,12 +390,20 @@
     .reason-card p { font-size:0.93rem; line-height:1.75; color:#5a3040; }
 
     /* ================================================================
-       PAGE: GAME — the main event
+       PAGE: GAME — dynamic background that shifts with answers
     ================================================================ */
     #page-game {
       background:linear-gradient(160deg,#120608,#1e0a14);
       align-items:flex-start; padding-top:32px;
+      transition: background 1.8s ease;
     }
+    /* Background themes triggered by game choices */
+    #page-game.gb-happy  { background:linear-gradient(160deg,#1a0510,#3a0a20,#1a0a00); }
+    #page-game.gb-sad    { background:linear-gradient(160deg,#050a1a,#0a0e2e,#050a1a); }
+    #page-game.gb-gold   { background:linear-gradient(160deg,#100800,#241400,#100800); }
+    #page-game.gb-stars  { background:linear-gradient(160deg,#04060f,#080d1e,#04060f); }
+    #page-game.gb-bloom  { background:linear-gradient(160deg,#1a0512,#300a20,#1a0512); }
+    #page-game.gb-finale { background:linear-gradient(160deg,#1a0010,#3a0030,#200820); }
     #page-game .page-inner { display:flex; flex-direction:column; align-items:center; gap:20px; }
 
     /* Heart meter */
@@ -622,22 +729,47 @@
     </div>
   </div>
 
-  <!-- PAGE: LETTER -->
+  <!-- PAGE: LETTER — her images + your reply in matching format -->
   <div class="page" id="page-letter">
     <div class="page-inner">
-      <div class="letter-card">
-        <span class="letter-stamp">From my heart</span>
-        <!-- ✏️ EDIT: Her name in letter -->
-        <h2>My dearest Laiba,</h2>
-        <!-- ✏️ EDIT: Your apology / letter text -->
-        <p>I know I hurt you, and I am truly, deeply sorry. The last thing I ever want is to be the reason for your tears or your pain. I have been thinking about it so much.</p>
-        <p>I take full responsibility — there is no excuse good enough. Only the honest truth: I love you, I messed up, and I am committed every single day to being better for you.</p>
-        <p>You are the best thing that has ever happened to me. I refuse to let my mistakes overshadow the beautiful future we are building together. Please know my goal, every day, is to be the person you deserve.</p>
-        <p>I am sorry. I love you. And I choose you — always, without question.</p>
-        <!-- ✏️ EDIT: Your name -->
-        <div class="letter-signature">Yours forever, always 🌹</div>
+
+      <!-- Her 6 images she made for you -->
+      <div class="her-images-wrap">
+        <div class="her-images-label">she made this for you, once upon a time 🥺</div>
+        <div class="her-images-grid">
+          <img class="her-img" src="https://cdn3.me-qr.com/image/2023/Dec/08/10432961.jpg" onclick="openLightbox(this.src)" alt=""/>
+          <img class="her-img" src="https://cdn3.me-qr.com/image/2023/Dec/08/10432962.jpg" onclick="openLightbox(this.src)" alt=""/>
+          <img class="her-img" src="https://cdn3.me-qr.com/image/2023/Dec/08/10432963.jpg" onclick="openLightbox(this.src)" alt=""/>
+          <img class="her-img" src="https://cdn3.me-qr.com/image/2023/Dec/08/10432964.jpg" onclick="openLightbox(this.src)" alt=""/>
+          <img class="her-img" src="https://cdn3.me-qr.com/image/2023/Dec/08/10432965.jpg" onclick="openLightbox(this.src)" alt=""/>
+          <img class="her-img" src="https://cdn3.me-qr.com/image/2023/Dec/08/10432966.jpg" onclick="openLightbox(this.src)" alt=""/>
+        </div>
       </div>
+
+      <!-- Your reply letter — same stamp card format as hers -->
+      <div class="letter-card">
+        <span class="letter-stamp">My reply 💌</span>
+
+        <!-- ✏️ EDIT: Her name -->
+        <h2>My dearest Laiba,</h2>
+
+        <!-- ✏️ EDIT: Write your reply to her letter here -->
+        <p>I found what you made for me — and I sat with it for a long time. I don't think you know how much something like this means. You made something beautiful just to make me smile, and you did, more than you know.</p>
+        <p>I want you to know I see you. Every little thing you do, every quiet way you show love — I notice all of it, even when I don't say it out loud. And I am sorry for the times I didn't show that enough.</p>
+        <p>You are the kind of person that makes the world feel warmer just by being in it. And I get to call you mine. That is something I never take for granted, even if it sometimes seems like I do.</p>
+        <p>Thank you for this. Thank you for every version of love you've shown me. I am going to spend a long time making sure you feel as loved as you make me feel.</p>
+
+        <!-- ✏️ EDIT: Your name -->
+        <div class="letter-signature">Yours, always and completely 🌹</div>
+      </div>
+
     </div>
+  </div>
+
+  <!-- Lightbox for her images -->
+  <div id="imgLightbox" onclick="closeLightbox()">
+    <span class="lb-close">✕</span>
+    <img id="lbImg" src="" alt=""/>
   </div>
 
   <!-- PAGE: REASONS -->
@@ -732,13 +864,45 @@
   <div class="page" id="page-promise">
     <div class="page-inner">
       <div class="promise-hearts">💖💖💖</div>
-      <!-- ✏️ EDIT: Promise headline -->
       <h2 class="promise-h">"I promise you,<br>my love, forever."</h2>
-      <!-- ✏️ EDIT: Your promise text -->
       <p class="promise-p">I promise to choose you every single day. To communicate better, to show up for you fully, and to never stop working on us. You are worth every effort.</p>
       <button class="promise-btn" onclick="launchFireworks(); sealPromise()">Seal it with a kiss 💋</button>
+
+      <!-- ================================================================
+           ✏️ HER PHOTO — a portrait of her, styled as a tribute
+           To add her photo:
+             Upload her image to your GitHub repo as "laiba.jpg"
+             OR paste a direct image URL into src=""
+             Then delete the placeholder div below
+      ================================================================ -->
+
+      <div class="her-photo-section">
+        <div class="her-photo-label">and this is the reason for all of it 🌹</div>
+
+        <!-- ✏️ Uncomment below & set src to her photo URL or "laiba.jpg" -->
+        
+        <div class="her-photo-frame">
+          <img src="pic_add.jpeg" alt="Laiba 💖" class="her-photo-img"/>
+          <div class="her-photo-glow"></div>
+        </div>
+        <div class="her-photo-caption">
+          <em>Laiba.</em><br>
+          <span>my favourite person in the world 💖</span>
+        </div>
+      
+
+        <!-- PLACEHOLDER — delete this once you add her photo above -->
+      <!--
+        <div class="her-photo-placeholder" id="photoPlaceholder">
+          <div class="php-icon">🌸</div>
+          <div class="php-text">her photo goes here</div>
+          <div class="php-hint">find "HER PHOTO" in the code → uncomment → add her image</div>
+        </div>
+      </div>
+
     </div>
   </div>
+        -->
 
   <!-- PAGE: ADMIN DASHBOARD — only visible to you -->
   <div class="page" id="page-admin">
@@ -809,7 +973,7 @@
 const HER_EMAIL  = "chelaiba123@gmail.com";   // ← change to her actual email
 // ✏️ Passcode = the starry night app name she used that night
 const HER_PASS   = "SkyView";              // ← the stargazing app you used that night
-const ADMIN_PASS = "admin_khasnen123";           // ← your secret admin passcode
+const ADMIN_PASS = "myadmin123";           // ← your secret admin passcode
 
 /* ================================================================
    FIREBASE SETUP
@@ -1428,11 +1592,53 @@ function renderChoices(step) {
   });
 }
 
+/* ================================================================
+   GAME BACKGROUND THEMES
+   Each choice label maps to a background class on #page-game
+   ✏️ EDIT: Add new bg classes in CSS and map labels here
+================================================================ */
+const GAME_BG_MAP = {
+  'aww hi 🥺':              'gb-bloom',
+  'okay let\'s see 😒':     'gb-stars',
+  'why are you so dramatic 😂': 'gb-gold',
+  'yes obviously 💖':       'gb-happy',
+  '... maybe 😶':           'gb-stars',
+  'no 😐':                  'gb-sad',
+  'yes it\'s sweet 🥹':     'gb-happy',
+  'still thinking about it 🤔': 'gb-stars',
+  'you better do more than this 😤': 'gb-gold',
+  'yes!! 🥰':               'gb-finale',
+  'it was okay 🙂':         'gb-bloom',
+  'honestly no 😂':         'gb-gold',
+};
+
+function setGameBg(label) {
+  const page = document.getElementById('page-game');
+  // Remove all bg classes
+  ['gb-happy','gb-sad','gb-gold','gb-stars','gb-bloom','gb-finale']
+    .forEach(c => page.classList.remove(c));
+  const cls = GAME_BG_MAP[label.toLowerCase()] || GAME_BG_MAP[label];
+  if (cls) page.classList.add(cls);
+}
+
+/* ================================================================
+   LIGHTBOX — for her images
+================================================================ */
+function openLightbox(src) {
+  document.getElementById('lbImg').src = src;
+  document.getElementById('imgLightbox').classList.add('show');
+}
+function closeLightbox() {
+  document.getElementById('imgLightbox').classList.remove('show');
+}
+
 async function handleChoice(opt) {
   // Disable buttons
   gameChoices.querySelectorAll('.choice-btn').forEach(b => { b.disabled = true; });
   // 💾 Save her game choice
   saveResponse('game', opt.label);
+  // 🎨 Shift game background based on her answer
+  setGameBg(opt.label);
 
   // Update heart meter
   if (opt.hearts) updateHeartMeter(opt.hearts);
