@@ -880,19 +880,18 @@
         <div class="her-photo-label">and this is the reason for all of it 🌹</div>
 
         <!-- ✏️ Uncomment below & set src to her photo URL or "laiba.jpg" -->
-        
+        <!--
         <div class="her-photo-frame">
-          <img src="pic_add.jpeg" alt="Laiba 💖" class="her-photo-img"/>
+          <img src="laiba.jpg" alt="Laiba 💖" class="her-photo-img"/>
           <div class="her-photo-glow"></div>
         </div>
         <div class="her-photo-caption">
           <em>Laiba.</em><br>
           <span>my favourite person in the world 💖</span>
         </div>
-      
+        -->
 
         <!-- PLACEHOLDER — delete this once you add her photo above -->
-      <!--
         <div class="her-photo-placeholder" id="photoPlaceholder">
           <div class="php-icon">🌸</div>
           <div class="php-text">her photo goes here</div>
@@ -902,7 +901,6 @@
 
     </div>
   </div>
-        -->
 
   <!-- PAGE: ADMIN DASHBOARD — only visible to you -->
   <div class="page" id="page-admin">
@@ -1562,6 +1560,8 @@ const STEPS = [
 
 /* ===== GAME ENGINE ===== */
 function addGameLine(text, cls, tw) {
+  // Guard: if gameOutput isn't ready yet, skip silently
+  if (!gameOutput) return Promise.resolve();
   return new Promise(async resolve => {
     const div = document.createElement('div');
     div.className = 'game-line ' + (cls || 'sys');
@@ -1578,6 +1578,7 @@ function addGameLine(text, cls, tw) {
 }
 
 function renderChoices(step) {
+  if (!gameChoices) return;
   gameChoices.innerHTML = '';
   if (!step.options || step.options.length === 0) return;
   const lbl = document.createElement('div');
@@ -1594,30 +1595,29 @@ function renderChoices(step) {
 
 /* ================================================================
    GAME BACKGROUND THEMES
-   Each choice label maps to a background class on #page-game
-   ✏️ EDIT: Add new bg classes in CSS and map labels here
 ================================================================ */
 const GAME_BG_MAP = {
-  'aww hi 🥺':              'gb-bloom',
-  'okay let\'s see 😒':     'gb-stars',
-  'why are you so dramatic 😂': 'gb-gold',
-  'yes obviously 💖':       'gb-happy',
-  '... maybe 😶':           'gb-stars',
-  'no 😐':                  'gb-sad',
-  'yes it\'s sweet 🥹':     'gb-happy',
-  'still thinking about it 🤔': 'gb-stars',
+  'aww hi 🥺':                    'gb-bloom',
+  "okay let's see 😒":            'gb-stars',
+  'why are you so dramatic 😂':   'gb-gold',
+  'yes obviously 💖':             'gb-happy',
+  '... maybe 😶':                 'gb-stars',
+  'no 😐':                        'gb-sad',
+  "yes it's sweet 🥹":            'gb-happy',
+  'still thinking about it 🤔':   'gb-stars',
   'you better do more than this 😤': 'gb-gold',
-  'yes!! 🥰':               'gb-finale',
-  'it was okay 🙂':         'gb-bloom',
-  'honestly no 😂':         'gb-gold',
+  'yes!! 🥰':                     'gb-finale',
+  'it was okay 🙂':               'gb-bloom',
+  'honestly no 😂':               'gb-gold',
 };
 
 function setGameBg(label) {
   const page = document.getElementById('page-game');
-  // Remove all bg classes
+  if (!page) return;
   ['gb-happy','gb-sad','gb-gold','gb-stars','gb-bloom','gb-finale']
     .forEach(c => page.classList.remove(c));
-  const cls = GAME_BG_MAP[label.toLowerCase()] || GAME_BG_MAP[label];
+  // Direct lookup only — emojis break toLowerCase()
+  const cls = GAME_BG_MAP[label];
   if (cls) page.classList.add(cls);
 }
 
@@ -1633,34 +1633,36 @@ function closeLightbox() {
 }
 
 async function handleChoice(opt) {
-  // Disable buttons
+  if (!gameChoices) return;
+  // Disable all buttons immediately
   gameChoices.querySelectorAll('.choice-btn').forEach(b => { b.disabled = true; });
   // 💾 Save her game choice
   saveResponse('game', opt.label);
-  // 🎨 Shift game background based on her answer
+  // 🎨 Shift game background
   setGameBg(opt.label);
-
-  // Update heart meter
+  // 💗 Update heart meter
   if (opt.hearts) updateHeartMeter(opt.hearts);
 
-  // Print response lines
+  // Print response lines one by one
   for (const line of (opt.lines || [])) {
     await addGameLine(line.text, line.cls);
     await sleep(120);
   }
 
-  const afterAll = async () => {
-    if (opt.fireworks) launchFireworks();
-    await sleep(500);
-    goToStep(opt.next);
-  };
+  await sleep(400);
 
   if (opt.reaction) {
-    await sleep(400);
-    showReaction(opt.reaction.emoji, opt.reaction.msg, opt.reaction.theme, afterAll);
+    // Show reaction overlay — goToStep called ONLY after user dismisses it
+    showReaction(opt.reaction.emoji, opt.reaction.msg, opt.reaction.theme, async () => {
+      if (opt.fireworks) launchFireworks();
+      await sleep(400);
+      goToStep(opt.next);
+    });
   } else {
-    await sleep(400);
-    afterAll();
+    // No reaction — go straight to next step
+    if (opt.fireworks) launchFireworks();
+    await sleep(200);
+    goToStep(opt.next);
   }
 }
 
@@ -1668,9 +1670,15 @@ async function goToStep(idx) {
   if (idx === undefined || idx === null || idx >= STEPS.length) return;
   const step = STEPS[idx];
   if (!step) return;
+
+  // Make sure elements are grabbed fresh in case DOM wasn't ready
+  if (!gameOutput)  gameOutput  = document.getElementById('gameOutput');
+  if (!gameChoices) gameChoices = document.getElementById('gameChoices');
+  if (!gameOutput || !gameChoices) return;
+
   gameChoices.innerHTML = '';
 
-  // Loader step
+  // Loader step — auto-advances, no choices
   if (step.type === 'loader') {
     await sleep(400);
     await fakeLoad(step.loader);
@@ -1679,20 +1687,21 @@ async function goToStep(idx) {
     return;
   }
 
-  // Print lines
+  // Print dialogue lines
   for (const line of (step.lines || [])) {
     await addGameLine(line.text, line.cls);
     await sleep(100);
   }
 
+  // Final step — no choices, just end
   if (step.final) {
     await sleep(300);
     const hearts = document.createElement('div');
-    hearts.className = 'game-line react'; hearts.textContent = '💖 💖 💖';
+    hearts.className = 'game-line react';
+    hearts.textContent = '💖 💖 💖';
     gameOutput.appendChild(hearts);
     gameOutput.scrollTop = gameOutput.scrollHeight;
     launchFireworks();
-    // Force meter to 100 on completion
     updateHeartMeter(100 - heartMeter);
     return;
   }
