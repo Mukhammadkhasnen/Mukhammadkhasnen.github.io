@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>For You, My Love 💌</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    /* ============================================================
+       EASY TO EDIT SECTION — change these values to customize!
+       ============================================================ */
+
+    :root {
+      --rose:       #c0395b;
+      --rose-light: #f7d6df;
+      --cream:      #fdf6f0;
+      --gold:       #b8902a;
+      --dark:       #2c1a22;
+    }
+
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family:'Lato',sans-serif; background:var(--cream);
+      color:var(--dark); min-height:100vh; overflow-x:hidden; transition:background 1s;
+    }
+    body.theme-happy { background:#fff0f8; }
+    body.theme-cry   { background:#f0f4ff; }
+    body.theme-joy   { background:#fffbec; }
+
+    /* ======================= LOGIN SCREEN ======================= */
+    #loginScreen {
+      position:fixed; inset:0; z-index:9999;
+      background:linear-gradient(135deg,#1a0a10 0%,#2e0e1e 50%,#1a0510 100%);
+      display:flex; align-items:center; justify-content:center;
+      flex-direction:column; padding:24px;
+    }
+    #loginScreen.hidden { display:none; }
+
+    .login-petals { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+    .login-petal {
+      position:absolute; border-radius:50% 50% 50% 0; opacity:0;
+      animation:fall linear infinite;
+    }
+    @keyframes fall { 0%{transform:translateY(-20px) rotate(0deg);opacity:0.6;} 100%{transform:translateY(110vh) rotate(360deg);opacity:0;} }
+
+    .login-card {
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(192,57,91,0.35);
+      border-radius:16px; padding:48px 44px;
+      max-width:420px; width:100%;
+      backdrop-filter:blur(12px);
+      box-shadow:0 0 80px rgba(192,57,91,0.2);
+      position:relative; z-index:2; text-align:center;
+    }
+    .login-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background:linear-gradient(90deg,var(--rose),var(--gold),var(--rose));
+      border-radius:16px 16px 0 0;
+    }
+    .login-lock { font-size:52px; margin-bottom:12px; animation:heartbeat 1.8s ease-in-out infinite; display:block; }
+    @keyframes heartbeat { 0%,100%{transform:scale(1);} 14%{transform:scale(1.12);} 42%{transform:scale(1.06);} }
+    .login-title {
+      font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300;
+      color:#f7a8bf; margin-bottom:6px;
+    }
+    .login-sub { font-size:0.82rem; color:#a06070; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:36px; }
+
+    .login-field { margin-bottom:18px; text-align:left; }
+    .login-field label { display:block; font-size:0.75rem; letter-spacing:0.15em; text-transform:uppercase; color:#a06070; margin-bottom:8px; }
+    .login-field input {
+      width:100%; padding:14px 18px;
+      background:rgba(255,255,255,0.06); border:1px solid rgba(192,57,91,0.3);
+      border-radius:8px; color:#f7d6df; font-family:'Lato',sans-serif; font-size:0.95rem;
+      outline:none; transition:border-color 0.2s;
+    }
+    .login-field input::placeholder { color:#6a3040; }
+    .login-field input:focus { border-color:var(--rose); }
+
+    .login-btn {
+      width:100%; padding:15px; margin-top:8px;
+      background:var(--rose); color:white; border:none; border-radius:8px;
+      font-family:'Cormorant Garamond',serif; font-size:1.15rem; font-style:italic;
+      cursor:pointer; transition:all 0.2s;
+      box-shadow:0 4px 20px rgba(192,57,91,0.35);
+    }
+    .login-btn:hover { background:#a82e4e; transform:translateY(-1px); box-shadow:0 6px 28px rgba(192,57,91,0.5); }
+
+    .login-error {
+      margin-top:16px; padding:12px 16px;
+      background:rgba(255,60,60,0.12); border:1px solid rgba(255,60,60,0.3);
+      border-radius:6px; color:#ff9999; font-size:0.88rem;
+      display:none;
+    }
+    .login-error.show { display:block; }
+    .login-hint { margin-top:20px; font-size:0.78rem; color:#6a3040; line-height:1.6; }
+
+    /* ======================= ADMIN VIEWER ======================= */
+    #adminScreen {
+      position:fixed; inset:0; z-index:9998;
+      background:#0d0508; overflow-y:auto; padding:40px 24px;
+      display:none;
+    }
+    #adminScreen.show { display:block; }
+    .admin-header { text-align:center; margin-bottom:40px; }
+    .admin-header h1 { font-family:'Cormorant Garamond',serif; color:#f7a8bf; font-size:2.4rem; font-weight:300; margin-bottom:8px; }
+    .admin-header p  { color:#a06070; font-size:0.85rem; letter-spacing:0.1em; }
+    .admin-section { max-width:760px; margin:0 auto 40px; }
+    .admin-section h2 { color:#b8902a; font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:300; margin-bottom:16px; border-bottom:1px solid #2a0a14; padding-bottom:8px; }
+    .admin-entry {
+      background:rgba(255,255,255,0.04); border:1px solid #2a0a14; border-radius:8px;
+      padding:16px 20px; margin-bottom:10px;
+    }
+    .admin-entry .entry-time { font-size:0.72rem; color:#6a3040; margin-bottom:6px; letter-spacing:0.08em; }
+    .admin-entry .entry-text { color:#f7d6df; font-size:0.95rem; line-height:1.6; }
+    .admin-entry .entry-type { display:inline-block; font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; padding:2px 8px; border-radius:10px; margin-bottom:8px; }
+    .type-chat  { background:rgba(192,57,91,0.25); color:#f7a8bf; }
+    .type-game  { background:rgba(184,144,42,0.25); color:#ffd070; }
+    .type-quick { background:rgba(46,204,113,0.2);  color:#7ee8a2; }
+    .admin-empty { color:#6a3040; font-style:italic; padding:20px 0; text-align:center; }
+    .admin-clear-btn { background:rgba(255,60,60,0.15); border:1px solid rgba(255,60,60,0.3); color:#ff9999; padding:10px 24px; border-radius:6px; cursor:pointer; font-family:'Lato',sans-serif; font-size:0.85rem; margin-top:8px; transition:all 0.2s; }
+    .admin-clear-btn:hover { background:rgba(255,60,60,0.3); }
+    .admin-back-btn { background:var(--rose); color:white; border:none; padding:12px 28px; border-radius:6px; cursor:pointer; font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-style:italic; margin-top:24px; display:block; margin:24px auto 0; }
+    .admin-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:32px; max-width:760px; margin-left:auto; margin-right:auto; }
+    .stat-box { background:rgba(255,255,255,0.04); border:1px solid #2a0a14; border-radius:8px; padding:16px; text-align:center; }
+    .stat-num { font-family:'Cormorant Garamond',serif; font-size:2.2rem; color:#f7a8bf; }
+    .stat-lbl { font-size:0.72rem; color:#6a3040; letter-spacing:0.1em; text-transform:uppercase; margin-top:4px; }
+
+    /* ======================= MAIN CONTENT ======================= */
+    .main-content { display:none; }
+    .main-content.show { display:block; }
+
+    /* Petals */
+    .petals-bg { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+    .petal { position:absolute; width:10px; height:14px; background:radial-gradient(ellipse,#f7a8bf,#e05580); border-radius:50% 50% 50% 0; opacity:0; animation:fall linear infinite; }
+
+    /* Nav */
+    nav { position:fixed; right:24px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:12px; z-index:100; }
+    nav a { width:10px; height:10px; border-radius:50%; background:var(--rose-light); border:2px solid var(--rose); transition:background 0.3s; display:block; }
+    nav a:hover, nav a.active { background:var(--rose); }
+
+    section { position:relative; z-index:1; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:60px 24px; }
+
+    /* HERO */
+    #hero { background:linear-gradient(160deg,#fdf0f5 0%,var(--cream) 60%); text-align:center; flex-direction:column; }
+    .hero-heart { font-size:72px; animation:heartbeat 1.4s ease-in-out infinite; display:block; margin-bottom:20px; }
+    #hero h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(2.4rem,6vw,4.5rem); font-weight:300; color:var(--rose); line-height:1.15; margin-bottom:18px; }
+    #hero h1 em { font-style:italic; color:var(--gold); }
+    #hero p { font-size:1.1rem; font-weight:300; max-width:500px; margin:0 auto 36px; line-height:1.8; color:#5a3040; }
+    .scroll-hint { font-size:0.78rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--rose); opacity:0.6; animation:bounce 2s infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(6px);} }
+
+    /* APOLOGY */
+    #apology { background:linear-gradient(135deg,#fff0f4,#fdf6f0); flex-direction:column; }
+    .letter-card { background:white; border:1px solid #f2c0cf; border-radius:4px; max-width:640px; width:100%; padding:56px 52px; box-shadow:0 8px 60px rgba(192,57,91,0.08); position:relative; }
+    .letter-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,var(--rose),var(--gold),var(--rose)); }
+    .letter-card .stamp { position:absolute; top:-18px; right:32px; background:var(--rose); color:white; font-family:'Cormorant Garamond',serif; font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; padding:4px 12px; border-radius:2px; }
+    .letter-card h2 { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:300; color:var(--rose); margin-bottom:28px; }
+    .letter-card p { font-size:1rem; line-height:1.9; color:#4a2030; margin-bottom:18px; }
+    .letter-card .signature { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-style:italic; color:var(--gold); margin-top:32px; }
+
+    /* REASONS */
+    #reasons { background:linear-gradient(160deg,#fdf6f0,#fff5f8); flex-direction:column; text-align:center; }
+    #reasons h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(1.8rem,4vw,3rem); font-weight:300; color:var(--rose); margin-bottom:48px; }
+    .reasons-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; max-width:860px; width:100%; }
+    .reason-card { background:white; border:1px solid #f2c0cf; border-radius:8px; padding:28px 22px; transition:transform 0.3s,box-shadow 0.3s; cursor:default; }
+    .reason-card:hover { transform:translateY(-6px); box-shadow:0 12px 40px rgba(192,57,91,0.14); }
+    .reason-card .icon { font-size:2rem; margin-bottom:12px; }
+    .reason-card p { font-size:0.95rem; line-height:1.7; color:#5a3040; }
+
+    /* GAME */
+    #game { background:linear-gradient(160deg,#1a0a10,#2e0e1e); flex-direction:column; text-align:center; }
+    .game-header { font-family:'Cormorant Garamond',serif; font-size:clamp(1.6rem,4vw,2.8rem); font-weight:300; color:#f7a8bf; margin-bottom:8px; }
+    .game-subtitle { font-size:0.85rem; letter-spacing:0.2em; text-transform:uppercase; color:#a06070; margin-bottom:40px; }
+    .game-window { background:#0d0508; border:1px solid #4a1828; border-radius:12px; max-width:600px; width:100%; overflow:hidden; box-shadow:0 0 60px rgba(192,57,91,0.25); }
+    .game-titlebar { background:#1e0a12; padding:12px 18px; display:flex; align-items:center; gap:8px; border-bottom:1px solid #3a1020; }
+    .dot { width:12px; height:12px; border-radius:50%; }
+    .dot-r{background:#c0395b;} .dot-y{background:#b8902a;} .dot-g{background:#2ecc71;}
+    .game-titlebar span { color:#a06070; font-size:0.78rem; margin-left:8px; letter-spacing:0.1em; }
+    .game-output { padding:24px; min-height:200px; max-height:380px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+    .game-line { font-size:0.95rem; line-height:1.7; text-align:left; animation:lineIn 0.35s ease; }
+    @keyframes lineIn { from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);} }
+    .game-line.sys  { color:#f7a8bf; }
+    .game-line.her  { color:#ffd700; }
+    .game-line.react{ color:#7ee8a2; font-style:italic; font-size:1.4rem; text-align:center; }
+    .game-line.love { color:#ff6b95; font-family:'Cormorant Garamond',serif; font-size:1.1rem; }
+    .game-choices { padding:0 24px 24px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+    .game-q-label { width:100%; text-align:center; color:#a06070; font-size:0.8rem; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:4px; }
+    .choice-btn { background:transparent; border:1.5px solid #c0395b; color:#f7a8bf; padding:10px 22px; border-radius:6px; font-family:'Lato',sans-serif; font-size:0.9rem; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+    .choice-btn::before { content:''; position:absolute; inset:0; background:var(--rose); opacity:0; transition:opacity 0.2s; }
+    .choice-btn:hover::before { opacity:1; }
+    .choice-btn:hover { color:white; border-color:var(--rose); transform:scale(1.05); }
+    .choice-btn span { position:relative; z-index:1; }
+    .choice-btn:disabled { opacity:0.4; cursor:default; transform:none; }
+
+    /* Reaction overlay */
+    #reactionOverlay { display:none; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; flex-direction:column; gap:20px; padding:24px; }
+    #reactionOverlay.show { display:flex; }
+    .reaction-emoji { font-size:90px; animation:popIn 0.5s cubic-bezier(.175,.885,.32,1.275); }
+    @keyframes popIn { from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;} }
+    .reaction-msg { font-family:'Cormorant Garamond',serif; font-size:clamp(1.3rem,4vw,2.2rem); color:white; text-align:center; max-width:500px; line-height:1.5; animation:fadeUp 0.5s 0.2s both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
+    .reaction-close { background:white; color:var(--rose); border:none; padding:12px 32px; border-radius:30px; font-size:1rem; cursor:pointer; animation:fadeUp 0.5s 0.4s both; font-family:'Lato',sans-serif; }
+
+    /* CHAT */
+    #interact { background:linear-gradient(135deg,#fff0f4,#fdf6f0); flex-direction:column; text-align:center; }
+    #interact h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(1.8rem,4vw,3rem); font-weight:300; color:var(--rose); margin-bottom:10px; }
+    #interact .subtitle { font-size:0.95rem; color:#9a5060; margin-bottom:36px; }
+    .chat-box { background:white; border:1px solid #f2c0cf; border-radius:12px; max-width:560px; width:100%; overflow:hidden; box-shadow:0 8px 40px rgba(192,57,91,0.1); }
+    .chat-messages { padding:24px; min-height:220px; max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+    .msg { padding:12px 16px; border-radius:18px; font-size:0.95rem; line-height:1.6; max-width:80%; animation:msgIn 0.3s ease; }
+    @keyframes msgIn { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+    .msg.him { background:var(--rose); color:white; align-self:flex-end; border-bottom-right-radius:4px; }
+    .msg.her { background:var(--rose-light); color:var(--dark); align-self:flex-start; border-bottom-left-radius:4px; }
+    .chat-input-row { display:flex; border-top:1px solid #f2c0cf; }
+    .chat-input-row input { flex:1; padding:16px 20px; border:none; outline:none; font-family:'Lato',sans-serif; font-size:0.95rem; color:var(--dark); background:#fffbfc; }
+    .chat-input-row button { background:var(--rose); color:white; border:none; padding:0 24px; font-size:1.2rem; cursor:pointer; transition:background 0.2s; }
+    .chat-input-row button:hover { background:#a82e4e; }
+    .quick-btns { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:16px; max-width:560px; }
+    .quick-btn { background:white; border:1.5px solid var(--rose); color:var(--rose); padding:8px 16px; border-radius:20px; font-size:0.82rem; cursor:pointer; transition:all 0.2s; font-family:'Lato',sans-serif; }
+    .quick-btn:hover { background:var(--rose); color:white; }
+
+    /* PROMISE */
+    #promise { background:linear-gradient(160deg,#c0395b,#8b1a33); color:white; flex-direction:column; text-align:center; }
+    #promise h2 { font-family:'Cormorant Garamond',serif; font-size:clamp(2rem,5vw,3.6rem); font-weight:300; margin-bottom:28px; line-height:1.2; }
+    #promise p { font-size:1rem; max-width:480px; line-height:1.9; opacity:0.88; margin-bottom:44px; }
+    .promise-heart-btn { background:white; color:var(--rose); border:none; padding:16px 40px; border-radius:40px; font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-style:italic; cursor:pointer; transition:transform 0.2s,box-shadow 0.2s; box-shadow:0 6px 30px rgba(0,0,0,0.15); }
+    .promise-heart-btn:hover { transform:scale(1.06); box-shadow:0 10px 40px rgba(0,0,0,0.25); }
+
+    #fireworks { position:fixed; inset:0; pointer-events:none; z-index:999; display:none; }
+    @media(max-width:560px) { .letter-card{padding:36px 24px;} .login-card{padding:36px 24px;} }
+  </style>
+</head>
+<body>
+
+<!-- ===================== LOGIN SCREEN ===================== -->
+<div id="loginScreen">
+  <div class="login-petals" id="loginPetals"></div>
+  <div class="login-card">
+    <span class="login-lock">💌</span>
+    <div class="login-title">This is for you</div>
+    <!-- ✏️ EDIT: Change the hint text below if you want -->
+    <div class="login-sub">Enter your details to unlock</div>
+
+    <div class="login-field">
+      <label>Your Email</label>
+      <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="off"/>
+    </div>
+    <div class="login-field">
+      <label>Secret Passcode</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="off"/>
+    </div>
+
+    <button class="login-btn" onclick="attemptLogin()">Open with Love 💖</button>
+    <div class="login-error" id="loginError">Hmm, that doesn't match. Try again? 🥺</div>
+    <div class="login-hint">Only one special person can open this 🔐</div>
+  </div>
+</div>
+
+<!-- ===================== ADMIN SCREEN ===================== -->
+<div id="adminScreen">
+  <div class="admin-header">
+    <h1>💌 Her Responses</h1>
+    <p>Everything Laiba wrote — just for you to read</p>
+  </div>
+
+  <div class="admin-stats" id="adminStats"></div>
+
+  <div class="admin-section">
+    <h2>💬 Chat Messages She Typed</h2>
+    <div id="adminChat"></div>
+  </div>
+  <div class="admin-section">
+    <h2>🎮 Game Choices She Made</h2>
+    <div id="adminGame"></div>
+  </div>
+  <div class="admin-section">
+    <h2>⚡ Quick Replies She Tapped</h2>
+    <div id="adminQuick"></div>
+  </div>
+
+  <div style="text-align:center; max-width:760px; margin:0 auto;">
+    <button class="admin-clear-btn" onclick="clearResponses()">🗑 Clear All Saved Responses</button>
+    <br>
+    <button class="admin-back-btn" onclick="window.location.href=window.location.pathname">← Back to Login</button>
+  </div>
+</div>
+
+<!-- ===================== MAIN CONTENT ===================== -->
+<div class="main-content" id="mainContent">
+
+  <div class="petals-bg" id="petals"></div>
+
+  <nav>
+    <a href="#hero"    title="Home"></a>
+    <a href="#apology" title="Apology"></a>
+    <a href="#reasons" title="Reasons"></a>
+    <a href="#game"    title="Game"></a>
+    <a href="#interact"title="Chat"></a>
+    <a href="#promise" title="Promise"></a>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <span class="hero-heart">💖</span>
+    <!-- ✏️ EDIT: Change the headline -->
+    <h1>For you,<br><em>my everything</em></h1>
+    <!-- ✏️ EDIT: Change the opening message -->
+    <p>I built this little corner of the internet just for you — because you deserve more than words, but words are where I'll start.</p>
+    <span class="scroll-hint">↓ &nbsp; scroll with love &nbsp; ↓</span>
+  </section>
+
+  <!-- APOLOGY LETTER -->
+  <section id="apology">
+    <div class="letter-card">
+      <span class="stamp">From my heart</span>
+      <!-- ✏️ EDIT: Her name -->
+      <h2>My dearest Laiba,</h2>
+      <!-- ✏️ EDIT: Your apology in your own words -->
+      <p>I know I hurt you, and I am truly, deeply sorry. The last thing I ever want is to be the reason for your tears or your pain.</p>
+      <p>I have been reflecting on what happened, and I take full responsibility. There is no excuse good enough — only the honest truth that I love you, I messed up, and I am committed to doing better.</p>
+      <p>You are the best thing that has ever walked into my life. I refuse to let my mistakes overshadow the beautiful future we are building together. Please know that every day, my goal is to be the person you deserve.</p>
+      <p>I am sorry. I love you. And I choose you — always.</p>
+      <!-- ✏️ EDIT: Your name -->
+      <div class="signature">Yours forever, always 🌹</div>
+    </div>
+  </section>
+
+  <!-- REASONS -->
+  <section id="reasons">
+    <h2>Why I love you — let me count the ways</h2>
+    <!-- ✏️ EDIT: Change any cards -->
+    <div class="reasons-grid">
+      <div class="reason-card"><div class="icon">😂</div><p>Your laugh is the best sound in the world. It lights up every room.</p></div>
+      <div class="reason-card"><div class="icon">💪</div><p>You are stronger than you know — watching you be strong inspires me.</p></div>
+      <div class="reason-card"><div class="icon">🤝</div><p>You are my best friend. I can tell you anything and you never judge me.</p></div>
+      <div class="reason-card"><div class="icon">🌙</div><p>Even on my worst days, thinking of you makes everything feel okay.</p></div>
+      <div class="reason-card"><div class="icon">🔥</div><p>The passion and care you put into everything you do blows my mind.</p></div>
+      <div class="reason-card"><div class="icon">🏡</div><p>Wherever you are feels like home. You are my safe place.</p></div>
+    </div>
+  </section>
+
+  <!-- THE GAME -->
+  <section id="game">
+    <div class="game-header">🎮 A little game, just for you, Laiba</div>
+    <div class="game-subtitle">✨ pick your answers — the page will react ✨</div>
+    <div class="game-window">
+      <div class="game-titlebar">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <span>love.exe — running with full heart 💖</span>
+      </div>
+      <div class="game-output" id="gameOutput">
+        <div class="game-line sys">hii 👋</div>
+        <div class="game-line sys">Welcome, Laiba. This was made just for you 🥺</div>
+      </div>
+      <div class="game-choices" id="gameChoices"></div>
+    </div>
+  </section>
+
+  <!-- CHAT -->
+  <section id="interact">
+    <h2>Say something to me, Laiba 💬</h2>
+    <p class="subtitle">Type anything — I'm listening. Or pick a quick message below.</p>
+    <div class="chat-box">
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg him">Hey love 💕 I made this page just for you. How are you feeling?</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Type your message…" autocomplete="off"/>
+        <button onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+    <div class="quick-btns">
+      <button class="quick-btn" onclick="herQuickReply('I accept your apology 💖')">I accept your apology 💖</button>
+      <button class="quick-btn" onclick="herQuickReply('I still need some time 🥺')">I still need some time 🥺</button>
+      <button class="quick-btn" onclick="herQuickReply('I love you too 😊')">I love you too 😊</button>
+      <button class="quick-btn" onclick="herQuickReply('This is so sweet 🌸')">This is so sweet 🌸</button>
+      <button class="quick-btn" onclick="herQuickReply('We will be okay 💪')">We will be okay 💪</button>
+    </div>
+  </section>
+
+  <!-- PROMISE -->
+  <section id="promise">
+    <h2>"I promise you,<br>my love, forever."</h2>
+    <!-- ✏️ EDIT: Your promise -->
+    <p>I promise to choose you every single day. To communicate better, to show up for you, and to never stop working on us. Our love is worth every effort.</p>
+    <button class="promise-heart-btn" onclick="launchFireworks()">Seal it with a kiss 💋</button>
+  </section>
+
+</div><!-- end main-content -->
+
+<!-- Reaction Overlay -->
+<div id="reactionOverlay">
+  <div class="reaction-emoji" id="reactionEmoji"></div>
+  <div class="reaction-msg"   id="reactionMsg"></div>
+  <button class="reaction-close" id="reactionCloseBtn">Continue 💖</button>
+</div>
+
+<canvas id="fireworks"></canvas>
+
+<script>
+/* ================================================================
+   ✏️ EDIT THESE — your credentials
+================================================================ */
+// ✏️ EDIT: Put Laiba's email here (lowercase)
+const HER_EMAIL   = "laiba@example.com";
+// ✏️ EDIT: Put your chosen passcode here
+const HER_PASS    = "laiba2024";
+// ✏️ EDIT: Your secret admin passcode (to view her responses)
+const ADMIN_PASS  = "myadmin123";
+
+/* ================================================================
+   RESPONSE STORAGE — saves her activity to localStorage
+   You view it by going to:  yoursite.com/?admin=true
+================================================================ */
+const STORAGE_KEY = "laiba_responses";
+
+function getResponses() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"chat":[],"game":[],"quick":[]}'); }
+  catch(e) { return { chat:[], game:[], quick:[] }; }
+}
+
+function saveResponse(type, text) {
+  const data = getResponses();
+  const entry = {
+    text: text,
+    time: new Date().toLocaleString('en-PK', { dateStyle:'medium', timeStyle:'short' })
+  };
+  if (!data[type]) data[type] = [];
+  data[type].push(entry);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function clearResponses() {
+  if (confirm("Clear all saved responses?")) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderAdmin();
+  }
+}
+
+/* ================================================================
+   LOGIN
+================================================================ */
+function attemptLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('loginPass').value.trim();
+  const err   = document.getElementById('loginError');
+
+  if (email === HER_EMAIL && pass === HER_PASS) {
+    err.classList.remove('show');
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainContent').classList.add('show');
+    initMainContent();
+  } else {
+    err.classList.add('show');
+    document.getElementById('loginPass').value = '';
+  }
+}
+
+// Also allow Enter key on both fields
+document.getElementById('loginEmail').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('loginPass').focus(); });
+document.getElementById('loginPass').addEventListener('keydown',  e => { if(e.key==='Enter') attemptLogin(); });
+
+/* ================================================================
+   ADMIN MODE — visit site with ?admin=true then enter admin pass
+================================================================ */
+function checkAdminMode() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('admin') === 'true') {
+    const entered = prompt("🔐 Enter admin passcode:");
+    if (entered && entered.trim() === ADMIN_PASS) {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('adminScreen').classList.add('show');
+      renderAdmin();
+    } else {
+      alert("Wrong passcode!");
+    }
+  }
+}
+
+function renderAdmin() {
+  const data = getResponses();
+
+  // Stats
+  const total = (data.chat||[]).length + (data.game||[]).length + (data.quick||[]).length;
+  document.getElementById('adminStats').innerHTML = `
+    <div class="stat-box"><div class="stat-num">${total}</div><div class="stat-lbl">Total Responses</div></div>
+    <div class="stat-box"><div class="stat-num">${(data.chat||[]).length}</div><div class="stat-lbl">Chat Messages</div></div>
+    <div class="stat-box"><div class="stat-num">${(data.game||[]).length}</div><div class="stat-lbl">Game Choices</div></div>
+    <div class="stat-box"><div class="stat-num">${(data.quick||[]).length}</div><div class="stat-lbl">Quick Replies</div></div>
+  `;
+
+  function renderSection(containerId, entries, typeClass, typeLabel) {
+    const c = document.getElementById(containerId);
+    if (!entries || entries.length === 0) {
+      c.innerHTML = '<div class="admin-empty">Nothing here yet 🥺</div>';
+      return;
+    }
+    c.innerHTML = entries.map(e => `
+      <div class="admin-entry">
+        <span class="entry-type ${typeClass}">${typeLabel}</span>
+        <div class="entry-time">🕐 ${e.time}</div>
+        <div class="entry-text">${e.text}</div>
+      </div>
+    `).join('');
+  }
+
+  renderSection('adminChat',  data.chat,  'type-chat',  'Chat');
+  renderSection('adminGame',  data.game,  'type-game',  'Game Choice');
+  renderSection('adminQuick', data.quick, 'type-quick', 'Quick Reply');
+}
+
+/* ================================================================
+   MAIN CONTENT INIT
+================================================================ */
+function initMainContent() {
+  // Petals
+  const pc = document.getElementById('petals');
+  for (let i=0;i<18;i++){
+    const p=document.createElement('div'); p.classList.add('petal');
+    p.style.left=(Math.random()*100)+'vw'; p.style.top=(Math.random()*100)+'vh';
+    p.style.animationDuration=(6+Math.random()*10)+'s'; p.style.animationDelay=(Math.random()*10)+'s';
+    p.style.width=(8+Math.random()*8)+'px'; p.style.height=(10+Math.random()*10)+'px';
+    pc.appendChild(p);
+  }
+
+  // Nav dots
+  const allSections = document.querySelectorAll('section');
+  const navLinks    = document.querySelectorAll('nav a');
+  window.addEventListener('scroll', () => {
+    let cur='';
+    allSections.forEach(s => { if(window.scrollY>=s.offsetTop-window.innerHeight/2) cur=s.id; });
+    navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href')==='#'+cur));
+  });
+
+  // Start game
+  setTimeout(() => goToStep(0), 900);
+}
+
+/* ================================================================
+   REACTION OVERLAY
+================================================================ */
+function showReaction(emoji, msg, theme, callback) {
+  document.getElementById('reactionEmoji').textContent = emoji;
+  document.getElementById('reactionMsg').textContent   = msg;
+  if (theme) document.body.classList.add(theme);
+  const ov = document.getElementById('reactionOverlay');
+  ov.classList.add('show');
+  document.getElementById('reactionCloseBtn').onclick = () => {
+    ov.classList.remove('show');
+    if (callback) callback();
+  };
+}
+
+/* ================================================================
+   THE GAME
+   ✏️ EDIT: Change any dialogue inside STEPS below
+================================================================ */
+const STEPS = [
+  /* STEP 0 — greeting */
+  {
+    lines: [],
+    question: "Say something back 👀",
+    options: [
+      {
+        label: "hi 👋",
+        response: [
+          { text: "> hi 👋", cls: "her" },
+          { text: "what up?? 😄", cls: "sys" },
+          { text: "you said hi and my whole day just got better!!", cls: "sys" }
+        ],
+        reaction: { emoji: "😄🎉", msg: "She said HI!! We're off to a great start!!", theme: null },
+        next: 1
+      },
+      {
+        label: "bye 😒",
+        response: [
+          { text: "> bye 😒", cls: "her" },
+          { text: "whyyyy 😭 you literally just got here!!", cls: "sys" },
+          { text: "please don't go... okay fine sit back down 🥺", cls: "sys" }
+        ],
+        reaction: { emoji: "😭💔", msg: "She said bye... I am devastated. Come back please!", theme: "theme-cry" },
+        next: 1
+      }
+    ]
+  },
+  /* STEP 1 — love question */
+  {
+    lines: [
+      { text: "just wanted to know something... 🥺", cls: "sys" },
+      { text: "do you love me ???? 💕", cls: "love" }
+    ],
+    question: "Do you love me?",
+    options: [
+      {
+        label: "yes 💖",
+        response: [
+          { text: "> yes 💖", cls: "her" },
+          { text: "yay me happy!!! 🎊", cls: "sys" },
+          { text: "i loveeeeeeeeeeee you tooooooo 💖💖💖", cls: "love" }
+        ],
+        reaction: { emoji: "🥳💖", msg: "YAY!! She said YES!! I am the happiest person alive right now!!! 💖💖💖", theme: "theme-happy" },
+        fireworks: true, next: 2
+      },
+      {
+        label: "no 😶",
+        response: [
+          { text: "> no 😶", cls: "her" },
+          { text: "whyyyyy ????? 😭😭😭", cls: "sys" },
+          { text: "i will cry now please love me 🥺🥺", cls: "sys" }
+        ],
+        reaction: { emoji: "😭😭😭", msg: "Nooooo 😭 I will sit here and cry until you change your answer. Take your time.", theme: "theme-cry" },
+        next: 2
+      }
+    ]
+  },
+  /* STEP 2 — last question gate */
+  {
+    lines: [{ text: "ok last question??? 😬", cls: "sys" }],
+    question: "Are you ready?",
+    options: [
+      {
+        label: "ok 😊",
+        response: [
+          { text: "> ok 😊", cls: "her" },
+          { text: "so question is DiD you enjoy?? did you like it ?? 👀", cls: "sys" }
+        ],
+        reaction: null, next: 3
+      },
+      {
+        label: "no 😒",
+        response: [
+          { text: "> no 😒", cls: "her" },
+          { text: "too bad hehe 😏", cls: "sys" },
+          { text: "so question is DiD you enjoy?? did you like it ?? 👀", cls: "sys" }
+        ],
+        reaction: null, next: 3
+      }
+    ]
+  },
+  /* STEP 3 — enjoy question */
+  {
+    lines: [],
+    question: "Did you enjoy this?",
+    options: [
+      {
+        label: "yes 🥰",
+        response: [
+          { text: "> yes 🥰", cls: "her" },
+          { text: "glad to know you enjoyed 😊", cls: "sys" },
+          { text: "and glad i was able to make you smile ;) <3", cls: "love" }
+        ],
+        reaction: { emoji: "🥰✨", msg: "She smiled!! That's literally all I ever wanted. Mission accomplished 😊", theme: "theme-joy" },
+        fireworks: true, next: 4
+      },
+      {
+        label: "no 😐",
+        response: [
+          { text: "> no 😐", cls: "her" },
+          { text: "lies!! i know you secretly liked it 😏", cls: "sys" },
+          { text: "glad i was able to make you smile ;) <3", cls: "love" }
+        ],
+        reaction: { emoji: "😏💕", msg: "I don't believe you one bit... I bet you're smiling right now 😏", theme: "theme-happy" },
+        next: 4
+      }
+    ]
+  },
+  /* STEP 4 — FINAL */
+  {
+    lines: [
+      { text: "i know spellings are messed up but still 😅", cls: "sys" },
+      { text: "i am happy you came and it was nice and best day so far", cls: "sys" },
+      { text: "i love you <3 <3", cls: "love" },
+      { text: "this is all, love you Laiba 💖", cls: "love" },
+      { text: "yar i wish i could do more... for now i have this. bye 🥺", cls: "sys" },
+      { text: "The end of program", cls: "sys" },
+      { text: "i love you", cls: "love" },
+      { text: "P.S : i will try to make this better if i didn't forget hehe", cls: "sys" },
+    ],
+    question: null, options: [], final: true
+  }
+];
+
+/* ---- Game Engine ---- */
+const gameOutput  = document.getElementById('gameOutput');
+const gameChoices = document.getElementById('gameChoices');
+
+function addLine(text, cls, delay) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'game-line ' + (cls||'sys');
+      div.textContent = text;
+      gameOutput.appendChild(div);
+      gameOutput.scrollTop = gameOutput.scrollHeight;
+      resolve();
+    }, delay);
+  });
+}
+
+function renderChoices(step) {
+  gameChoices.innerHTML = '';
+  if (!step.options || step.options.length===0) return;
+  const lbl = document.createElement('div');
+  lbl.className = 'game-q-label';
+  lbl.textContent = step.question || 'Your choice:';
+  gameChoices.appendChild(lbl);
+  step.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = '<span>'+opt.label+'</span>';
+    btn.onclick = () => handleChoice(opt);
+    gameChoices.appendChild(btn);
+  });
+}
+
+function handleChoice(opt) {
+  gameChoices.querySelectorAll('.choice-btn').forEach(b => { b.disabled=true; });
+  // 💾 SAVE her game choice
+  saveResponse('game', opt.label + ' — ' + (opt.response[0]?.text || ''));
+
+  let d = 200;
+  opt.response.forEach((line, i) => { addLine(line.text, line.cls, d + i*520); });
+  const afterDelay = d + opt.response.length*520 + 400;
+
+  if (opt.reaction) {
+    setTimeout(() => {
+      showReaction(opt.reaction.emoji, opt.reaction.msg, opt.reaction.theme, () => {
+        if (opt.fireworks) launchFireworks();
+        goToStep(opt.next);
+      });
+    }, afterDelay);
+  } else {
+    setTimeout(() => goToStep(opt.next), afterDelay);
+  }
+}
+
+async function goToStep(idx) {
+  if (idx===undefined||idx===null||idx>=STEPS.length) return;
+  const step = STEPS[idx];
+  gameChoices.innerHTML = '';
+  let d = 300;
+  for (const line of (step.lines||[])) { await addLine(line.text, line.cls, d); d+=600; }
+  if (step.final) {
+    setTimeout(() => {
+      const hearts = document.createElement('div');
+      hearts.className = 'game-line react'; hearts.textContent = '💖 💖 💖 💖 💖';
+      gameOutput.appendChild(hearts); gameOutput.scrollTop = gameOutput.scrollHeight;
+      launchFireworks();
+    }, d+400);
+    return;
+  }
+  setTimeout(() => renderChoices(step), d+300);
+}
+
+/* ================================================================
+   CHAT SECTION
+================================================================ */
+const autoResponses = [
+  "That means the world to me. 💗",
+  "I hear you… and I feel the same. 🥺",
+  "We can get through anything together. 🌹",
+  "You always know how to make me feel something. 💖",
+  "Thank you for being so honest with me. 🙏",
+  "I love you more than words can say. 😘",
+];
+let ri = 0;
+
+function addChatMsg(text, who) {
+  const msgs = document.getElementById('chatMessages');
+  const div  = document.createElement('div');
+  div.className = 'msg '+who; div.textContent = text;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+
+function sendMessage() {
+  const inp = document.getElementById('chatInput');
+  const txt = inp.value.trim(); if (!txt) return;
+  // 💾 SAVE her typed chat message
+  saveResponse('chat', txt);
+  addChatMsg(txt, 'her'); inp.value = '';
+  setTimeout(() => {
+    const reply = autoResponses[ri % autoResponses.length]; ri++;
+    addChatMsg(reply, 'him');
+  }, 900);
+}
+
+function herQuickReply(text) {
+  // 💾 SAVE her quick reply
+  saveResponse('quick', text);
+  addChatMsg(text, 'her');
+  const r = ["That makes my heart so full. 💕","Thank you for hearing me out. 🙏","I love you so much. 🌹","We are going to be amazing together. 💪"];
+  setTimeout(() => addChatMsg(r[Math.floor(Math.random()*r.length)], 'him'), 900);
+}
+
+document.getElementById('chatInput').addEventListener('keydown', e => { if(e.key==='Enter') sendMessage(); });
+
+/* ================================================================
+   FIREWORKS
+================================================================ */
+function launchFireworks() {
+  const canvas = document.getElementById('fireworks');
+  canvas.style.display='block'; canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d'); const particles=[];
+  for (let b=0;b<10;b++) {
+    setTimeout(() => {
+      const x=100+Math.random()*(canvas.width-200), y=80+Math.random()*(canvas.height/2);
+      for (let i=0;i<70;i++) {
+        const a=(Math.PI*2/70)*i, s=2+Math.random()*5;
+        particles.push({ x,y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:1,
+          color:['#c0395b','#f7a8bf','#b8902a','#ff6b95','#fff','#ffd700'][Math.floor(Math.random()*6)] });
+      }
+    }, b*300);
+  }
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for (let i=particles.length-1;i>=0;i--) {
+      const p=particles[i]; p.x+=p.vx; p.y+=p.vy+0.08; p.vy*=0.98; p.life-=0.013;
+      if(p.life<=0){particles.splice(i,1);continue;}
+      ctx.globalAlpha=p.life; ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    if(particles.length>0) requestAnimationFrame(draw);
+    else { ctx.clearRect(0,0,canvas.width,canvas.height); canvas.style.display='none'; }
+  }
+  draw();
+}
+
+/* ================================================================
+   LOGIN SCREEN PETALS (decorative)
+================================================================ */
+const lp = document.getElementById('loginPetals');
+for (let i=0;i<14;i++){
+  const p=document.createElement('div'); p.classList.add('login-petal');
+  const size = 8+Math.random()*10;
+  p.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*100}vh;width:${size}px;height:${size*1.3}px;background:radial-gradient(ellipse,rgba(247,168,191,0.5),rgba(224,85,128,0.3));animation-duration:${7+Math.random()*10}s;animation-delay:${Math.random()*8}s;`;
+  lp.appendChild(p);
+}
+
+/* ================================================================
+   BOOT — check if admin mode on load
+================================================================ */
+checkAdminMode();
+</script>
+</body>
+</html>
