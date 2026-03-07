@@ -641,7 +641,13 @@
     .adm-clear-btn { background:rgba(255,60,60,0.08); border:1px solid rgba(255,60,60,0.25); color:#ff9999; padding:9px 20px; border-radius:7px; cursor:pointer; font-family:'Lato',sans-serif; font-size:0.8rem; transition:all 0.2s; }
     .adm-clear-btn:hover { background:rgba(255,60,60,0.2); }
 
-    /* Admin tab special styling */
+    /* Secret admin tap zone — invisible corner */
+    #secretAdminTap {
+      position:absolute; bottom:0; right:0;
+      width:60px; height:60px; z-index:999;
+      cursor:default; -webkit-tap-highlight-color:transparent;
+    }
+
     #tab-admin { color:#b8902a !important; border:1px solid rgba(184,144,42,0.3) !important; border-radius:20px; }
     #tab-admin.active { background:rgba(184,144,42,0.1); }
     #tab-admin::after { background:var(--gold) !important; }
@@ -743,6 +749,9 @@
     <div class="login-error" id="loginError">Hmm, that doesn't match. Think about that night under the stars 🌟</div>
     <div class="login-bottom-hint">Only one special person holds the key 🔐</div>
   </div>
+
+  <!-- Secret admin tap zone — bottom-right corner, invisible, tap 5x fast -->
+  <div id="secretAdminTap" onclick="handleSecretTap()"></div>
 </div>
 
 <!-- ================================================================
@@ -927,7 +936,7 @@
         <div class="her-photo-label">and this is the reason for all of it 🌹</div>
 
         <!-- ✏️ Uncomment below & set src to her photo URL or "laiba.jpg" -->
-      
+        
         <div class="her-photo-frame">
           <img src="pic_add.jpeg" alt="Laiba 💖" class="her-photo-img"/>
           <div class="her-photo-glow"></div>
@@ -944,8 +953,8 @@
           <div class="php-icon">🌸</div>
           <div class="php-text">her photo goes here</div>
           <div class="php-hint">find "HER PHOTO" in the code → uncomment → add her image</div>
-        </div> -->
-        
+        </div>
+        -->
       </div>
 
     </div>
@@ -1026,7 +1035,7 @@
 const HER_EMAIL  = "chelaiba123@gmail.com";   // ← change to her actual email
 // ✏️ Passcode = the starry night app name she used that night
 const HER_PASS   = "SkyView";              // ← the stargazing app you used that night
-const ADMIN_PASS = "myadmin123";           // ← your secret admin passcode
+const ADMIN_PASS = "admin_khasnen";           // ← your secret admin passcode
 
 /* ================================================================
    FIREBASE SETUP
@@ -1036,7 +1045,7 @@ const ADMIN_PASS = "myadmin123";           // ← your secret admin passcode
    3. Click "Build" → "Realtime Database" → "Create database"
    4. Choose "Start in test mode" → Enable
    5. Click the gear icon ⚙️ → Project Settings
-   6. Scroll to "Your apps" → click </> (web) → register app
+   6. Scroll to "Your apps" → click the web icon (web) → register app
    7. Copy the firebaseConfig object and paste it below
    8. You'll see her responses live at:
       your-project.firebaseio.com/responses in the Firebase console
@@ -1842,6 +1851,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const ai = document.getElementById('adminOverlayInput');
   if (ai) ai.addEventListener('keydown', e => { if(e.key==='Enter') submitAdminOverlay(); });
 
+  // Admin overlay Enter key
+  const ao = document.getElementById('adminOverlayInput');
+  if (ao) ao.addEventListener('keydown', e => { if(e.key==='Enter') submitAdminOverlay(); });
+
   // Admin reply Enter key
   const ar = document.getElementById('admReplyInput');
   if (ar) ar.addEventListener('keydown', e => { if(e.key==='Enter') sendAdminReply(); });
@@ -1888,6 +1901,21 @@ function launchFireworks() {
     else { canvas.style.display = 'none'; }
   }
   draw();
+}
+
+/* ================================================================
+   SECRET ADMIN TAP — tap bottom-right corner 5x within 3 seconds
+================================================================ */
+let _secretTaps = 0, _secretTimer = null;
+function handleSecretTap() {
+  _secretTaps++;
+  clearTimeout(_secretTimer);
+  _secretTimer = setTimeout(() => { _secretTaps = 0; }, 3000);
+  if (_secretTaps >= 5) {
+    _secretTaps = 0;
+    document.getElementById('adminOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('adminOverlayInput').focus(), 150);
+  }
 }
 
 /* ================================================================
