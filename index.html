@@ -10,8 +10,11 @@
   <!-- ✏️ COPILOT HINT: Firebase config goes in the FIREBASE CONFIG section below in the script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    window._fbModules = { initializeApp, getDatabase, ref, push, onValue };
+    import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    window._fbModules = { initializeApp, getDatabase, ref, push, onValue, set };
+    // Signal that Firebase modules are ready
+    window._fbReady = true;
+    document.dispatchEvent(new Event('firebase-ready'));
   </script>
 
   <style>
@@ -936,7 +939,7 @@
         <div class="her-photo-label">and this is the reason for all of it 🌹</div>
 
         <!-- ✏️ Uncomment below & set src to her photo URL or "laiba.jpg" -->
-        
+      
         <div class="her-photo-frame">
           <img src="pic_add.jpeg" alt="Laiba 💖" class="her-photo-img"/>
           <div class="her-photo-glow"></div>
@@ -945,7 +948,6 @@
           <em>Laiba.</em><br>
           <span>my favourite person in the world 💖</span>
         </div>
-        
 
         <!-- PLACEHOLDER — delete this once you add her photo above -->
         <!--
@@ -1035,7 +1037,7 @@
 const HER_EMAIL  = "chelaiba123@gmail.com";   // ← change to her actual email
 // ✏️ Passcode = the starry night app name she used that night
 const HER_PASS   = "SkyView";              // ← the stargazing app you used that night
-const ADMIN_PASS = "admin_khasnen";           // ← your secret admin passcode
+const ADMIN_PASS = "adminkhasnen";           // ← your secret admin passcode
 
 /* ================================================================
    FIREBASE SETUP
@@ -1064,51 +1066,52 @@ const FIREBASE_CONFIG = {
 
 // Firebase will be initialized after login
 let db = null;
-let fbRef = null;
-let fbPush = null;
+let fbRef = null, fbPush = null, fbOnValue = null, fbSet = null;
+let _fbListeners = []; // track active listeners
 
-function initFirebase() {
-  // ✏️ COPILOT HINT: If firebase config is filled, this initializes the DB
-  try {
-    if (FIREBASE_CONFIG.apiKey === "YOUR_API_KEY") {
-      console.warn("⚠️ Firebase not configured — using localStorage fallback.");
-      return;
+function initFirebase(callback) {
+  const doInit = () => {
+    try {
+      if (!window._fbModules) { console.warn("Firebase modules not loaded"); if(callback) callback(false); return; }
+      const { initializeApp, getDatabase, ref, push, onValue, set } = window._fbModules;
+      const app = initializeApp(FIREBASE_CONFIG);
+      db       = getDatabase(app);
+      fbRef    = ref;
+      fbPush   = push;
+      fbOnValue= onValue;
+      fbSet    = set;
+      console.log("✅ Firebase connected!");
+      if(callback) callback(true);
+    } catch(e) {
+      console.warn("Firebase init failed:", e);
+      if(callback) callback(false);
     }
-    const { initializeApp, getDatabase, ref, push } = window._fbModules;
-    const app = initializeApp(FIREBASE_CONFIG);
-    db = getDatabase(app);
-    fbRef  = ref;
-    fbPush = push;
-    console.log("✅ Firebase connected!");
-  } catch(e) {
-    console.warn("Firebase init failed, using localStorage:", e);
-  }
+  };
+
+  // If modules already loaded, run immediately; else wait for signal
+  if (window._fbReady) { doInit(); }
+  else { document.addEventListener('firebase-ready', doInit, { once: true }); }
 }
 
 /* ================================================================
    RESPONSE STORAGE — Firebase primary, localStorage fallback
+   All saves go to BOTH so admin can always read them
 ================================================================ */
 function saveResponse(type, text) {
   const entry = {
-    type,
-    text,
+    type, text,
     time: new Date().toLocaleString('en-PK', { dateStyle:'medium', timeStyle:'short' }),
     timestamp: Date.now()
   };
-
-  // Try Firebase first
-  if (db && fbRef && fbPush) {
-    // ✏️ COPILOT HINT: Data saved to Firebase under /responses/{type}/
-    fbPush(fbRef(db, `responses/${type}`), entry)
-      .then(() => console.log(`✅ Saved to Firebase: [${type}] ${text}`))
-      .catch(e => { console.warn("Firebase save failed, falling back:", e); saveLocal(entry); });
-  } else {
-    saveLocal(entry);
+  saveLocal(entry);                          // always save locally
+  if (db && fbRef && fbPush) {               // also push to Firebase
+    fbPush(fbRef(db, `chat/${type}`), entry)
+      .then(() => console.log(`✅ Firebase saved [${type}]`))
+      .catch(e => console.warn("Firebase push failed:", e));
   }
 }
 
 function saveLocal(entry) {
-  // localStorage fallback
   const data = getLocalResponses();
   if (!data[entry.type]) data[entry.type] = [];
   data[entry.type].push(entry);
@@ -1124,6 +1127,36 @@ function clearResponses() {
   if (!confirm("Clear all saved responses?")) return;
   localStorage.removeItem("laiba_responses");
   renderAdminPage();
+}
+
+/* ================================================================
+   REAL-TIME FIREBASE LISTENER
+   Subscribes to /chat path and calls callback whenever data changes
+================================================================ */
+function subscribeToChat(callback) {
+  if (!db || !fbRef || !fbOnValue) return;
+  const unsubscribe = fbOnValue(fbRef(db, 'chat'), snapshot => {
+    const data = snapshot.val() || {};
+    callback(data);
+  });
+  _fbListeners.push(unsubscribe);
+}
+
+/* ================================================================
+   ADMIN: save your reply to Firebase so she sees it live
+================================================================ */
+function saveAdminReply(text) {
+  const entry = {
+    type: 'yours', text,
+    time: new Date().toLocaleString('en-PK', { dateStyle:'medium', timeStyle:'short' }),
+    timestamp: Date.now()
+  };
+  saveLocal(entry);
+  if (db && fbRef && fbPush) {
+    fbPush(fbRef(db, 'chat/yours'), entry)
+      .then(() => console.log('✅ Reply saved to Firebase'))
+      .catch(e => console.warn('Firebase reply failed:', e));
+  }
 }
 
 /* ================================================================
@@ -1212,10 +1245,12 @@ function triggerUnlockAnimation() {
       document.getElementById('loginScreen').classList.add('gone');
       document.getElementById('tabBar').classList.add('show');
       document.getElementById('appShell').classList.add('show');
-      initFirebase();
+      initFirebase(connected => {
+        if (connected) startRealtimeChat();
+      });
       initMainPetals();
-      revealAdminTab();          // show 🔐 Admin tab if admin mode
-      loadYourRepliesToChat();   // inject your saved replies into her chat
+      revealAdminTab();
+      loadYourRepliesToChat();
     }, 800);
   }, 300);
 }
@@ -1874,33 +1909,51 @@ function sealPromise() {
 function launchFireworks() {
   const canvas = document.getElementById('fireworks');
   canvas.style.display = 'block';
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   const ctx = canvas.getContext('2d');
   const particles = [];
-  for (let b = 0; b < 10; b++) {
-    setTimeout(() => {
-      const x = 80 + Math.random() * (canvas.width  - 160);
-      const y = 60 + Math.random() * (canvas.height * 0.55);
-      for (let i = 0; i < 75; i++) {
-        const a = (Math.PI * 2 / 75) * i, s = 2 + Math.random() * 6;
-        particles.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:1,
-          color:['#c0395b','#f7a8bf','#b8902a','#ff6b95','#fff','#ffd700'][Math.floor(Math.random()*6)] });
-      }
-    }, b * 280);
-  }
+  let animating = false;
+
   function draw() {
+    animating = true;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i]; p.x+=p.vx; p.y+=p.vy+0.09; p.vy*=0.98; p.life-=0.012;
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy + 0.09; p.vy *= 0.98; p.life -= 0.012;
       if (p.life <= 0) { particles.splice(i, 1); continue; }
-      ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
       ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
-    if (particles.length > 0) requestAnimationFrame(draw);
-    else { canvas.style.display = 'none'; }
+    // Keep looping until all bursts have fired and faded (10 bursts × 280ms + fade time)
+    if (Date.now() - _fwStart < 10 * 280 + 2500) {
+      requestAnimationFrame(draw);
+    } else if (particles.length > 0) {
+      requestAnimationFrame(draw);
+    } else {
+      canvas.style.display = 'none';
+      animating = false;
+    }
   }
-  draw();
+
+  const _fwStart = Date.now();
+  for (let b = 0; b < 10; b++) {
+    setTimeout(() => {
+      const x = 80 + Math.random() * (canvas.width - 160);
+      const y = 60 + Math.random() * (canvas.height * 0.55);
+      for (let i = 0; i < 75; i++) {
+        const a = (Math.PI * 2 / 75) * i, s = 2 + Math.random() * 6;
+        particles.push({
+          x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1,
+          color: ['#c0395b','#f7a8bf','#b8902a','#ff6b95','#fff','#ffd700'][Math.floor(Math.random() * 6)]
+        });
+      }
+      // Start the loop on first burst only
+      if (b === 0) draw();
+    }, b * 280);
+  }
 }
 
 /* ================================================================
@@ -1939,13 +1992,15 @@ function submitAdminOverlay() {
   const err = document.getElementById('adminOverlayError');
 
   if (val === ADMIN_PASS) {
-    // ✅ Correct
     document.getElementById('adminOverlay').classList.remove('show');
     isAdmin = true;
     document.getElementById('loginScreen').classList.add('gone');
     document.getElementById('tabBar').classList.add('show');
     document.getElementById('appShell').classList.add('show');
-    initFirebase();
+    initFirebase(connected => {
+      if (connected) startRealtimeAdmin();
+      else renderAdminPage(); // fallback to localStorage
+    });
     initMainPetals();
     revealAdminTab();
     loadYourRepliesToChat();
@@ -1969,16 +2024,12 @@ function revealAdminTab() {
    STORAGE — shared between regular save and admin replies
 ================================================================ */
 function getAllConvoMessages() {
-  // Returns all chat messages (hers + your replies) sorted by timestamp
   const data = getLocalResponses();
   const msgs = [];
-
-  (data.chat  || []).forEach(e => msgs.push({ ...e, who: 'her',   badgeCls: 'badge-her',   badgeLbl: 'Her' }));
-  (data.quick || []).forEach(e => msgs.push({ ...e, who: 'her',   badgeCls: 'badge-quick', badgeLbl: 'Quick' }));
-  (data.yours || []).forEach(e => msgs.push({ ...e, who: 'you',   badgeCls: 'badge-you',   badgeLbl: 'You' }));
-
-  // Sort by timestamp
-  msgs.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  (data.chat  || []).forEach(e => msgs.push({ ...e, who:'her', badgeCls:'badge-her',   badgeLbl:'Her'   }));
+  (data.quick || []).forEach(e => msgs.push({ ...e, who:'her', badgeCls:'badge-quick', badgeLbl:'Quick' }));
+  (data.yours || []).forEach(e => msgs.push({ ...e, who:'you', badgeCls:'badge-you',   badgeLbl:'You'   }));
+  msgs.sort((a,b) => (a.timestamp||0) - (b.timestamp||0));
   return msgs;
 }
 
@@ -1987,32 +2038,54 @@ function sendAdminReply() {
   const txt = inp.value.trim();
   if (!txt) return;
   inp.value = '';
+  saveAdminReply(txt);          // saves to Firebase + localStorage
+  injectReplyIntoHerChat(txt);  // show in her chat immediately if same session
+  renderAdminPage();            // refresh admin view
+}
 
-  // Save your reply under a separate key so it shows in her chat too
-  const entry = {
-    type: 'yours',
-    text: txt,
-    time: new Date().toLocaleString('en-PK', { dateStyle:'medium', timeStyle:'short' }),
-    timestamp: Date.now()
-  };
+/* ================================================================
+   REAL-TIME LISTENERS
+   startRealtimeChat — for her: watches /chat/yours so she sees your replies live
+   startRealtimeAdmin — for you: watches all of /chat so you see her msgs live
+================================================================ */
+function startRealtimeChat() {
+  if (!db || !fbRef || !fbOnValue) return;
+  // Watch for your replies appearing in Firebase — inject into her chat live
+  fbOnValue(fbRef(db, 'chat/yours'), snapshot => {
+    const msgs = document.getElementById('chatMessages');
+    if (!msgs) return;
+    // Clear existing "him" bubbles and re-render from Firebase
+    const existing = [...msgs.querySelectorAll('.msg.him.firebase')];
+    existing.forEach(el => el.remove());
+    const data = snapshot.val();
+    if (!data) return;
+    Object.values(data).sort((a,b) => (a.timestamp||0)-(b.timestamp||0)).forEach(entry => {
+      // Don't duplicate the static opening message
+      const div = document.createElement('div');
+      div.className = 'msg him firebase';
+      div.textContent = entry.text;
+      msgs.appendChild(div);
+    });
+    msgs.scrollTop = msgs.scrollHeight;
+  });
+}
 
-  // Save locally
-  const data = getLocalResponses();
-  if (!data.yours) data.yours = [];
-  data.yours.push(entry);
-  localStorage.setItem("laiba_responses", JSON.stringify(data));
-
-  // Also try Firebase
-  if (db && fbRef && fbPush) {
-    fbPush(fbRef(db, 'responses/yours'), entry)
-      .catch(e => console.warn('Firebase reply save failed:', e));
-  }
-
-  // Refresh admin view
-  renderAdminPage();
-
-  // Also inject into her chat live (if she has the page open)
-  injectReplyIntoHerChat(txt);
+function startRealtimeAdmin() {
+  if (!db || !fbRef || !fbOnValue) return;
+  // Watch entire /chat path — re-render admin page whenever anything changes
+  fbOnValue(fbRef(db, 'chat'), snapshot => {
+    const firebaseData = snapshot.val() || {};
+    // Merge Firebase data into localStorage so renderAdminPage works
+    const local = getLocalResponses();
+    ['chat','quick','game','yours'].forEach(type => {
+      if (firebaseData[type]) {
+        const entries = Object.values(firebaseData[type]);
+        local[type] = entries;
+      }
+    });
+    localStorage.setItem("laiba_responses", JSON.stringify(local));
+    renderAdminPage();
+  });
 }
 
 function injectReplyIntoHerChat(txt) {
@@ -2088,12 +2161,21 @@ function admClearChat() {
   const data = getLocalResponses();
   data.chat = []; data.quick = []; data.yours = [];
   localStorage.setItem("laiba_responses", JSON.stringify(data));
+  // Also clear in Firebase
+  if (db && fbRef && fbSet) {
+    fbSet(fbRef(db, 'chat/chat'),  null).catch(()=>{});
+    fbSet(fbRef(db, 'chat/quick'), null).catch(()=>{});
+    fbSet(fbRef(db, 'chat/yours'), null).catch(()=>{});
+  }
   renderAdminPage();
 }
 
 function admClearAll() {
   if (!confirm('Clear EVERYTHING — all messages, game choices, replies?')) return;
   localStorage.removeItem("laiba_responses");
+  if (db && fbRef && fbSet) {
+    fbSet(fbRef(db, 'chat'), null).catch(()=>{});
+  }
   renderAdminPage();
 }
 
@@ -2102,14 +2184,14 @@ function admClearAll() {
    so she can see what you wrote back
 ================================================================ */
 function loadYourRepliesToChat() {
+  // Load from localStorage first (instant)
   const data = getLocalResponses();
   const yours = data.yours || [];
-  if (yours.length === 0) return;
   const msgs = document.getElementById('chatMessages');
   if (!msgs) return;
   yours.forEach(e => {
     const div = document.createElement('div');
-    div.className = 'msg him';
+    div.className = 'msg him firebase';
     div.textContent = e.text;
     msgs.appendChild(div);
   });
