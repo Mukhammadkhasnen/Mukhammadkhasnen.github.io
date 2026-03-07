@@ -54,6 +54,47 @@
     }
 
     /* ================================================================
+       ADMIN LOGIN OVERLAY — replaces unreliable prompt()
+    ================================================================ */
+    #adminOverlay {
+      display:none; position:fixed; inset:0; z-index:99999;
+      background:rgba(0,0,0,0.85);
+      align-items:center; justify-content:center; padding:24px;
+    }
+    #adminOverlay.show { display:flex; }
+    .admin-overlay-card {
+      background:#0e0508; border:1px solid rgba(184,144,42,0.4);
+      border-radius:16px; padding:40px 36px; max-width:380px; width:100%;
+      text-align:center; animation:cardIn 0.4s cubic-bezier(.175,.885,.32,1.275) both;
+      box-shadow:0 0 80px rgba(184,144,42,0.15);
+    }
+    .admin-overlay-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background:linear-gradient(90deg,var(--gold),var(--rose),var(--gold));
+      border-radius:16px 16px 0 0;
+    }
+    .admin-overlay-icon { font-size:44px; margin-bottom:12px; display:block; }
+    .admin-overlay-title { font-family:'Cormorant Garamond',serif; font-size:1.7rem; font-weight:300; color:#ffd070; margin-bottom:6px; }
+    .admin-overlay-sub { font-size:0.76rem; color:#7a5020; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:28px; }
+    .admin-overlay-input {
+      width:100%; padding:13px 17px; margin-bottom:14px;
+      background:rgba(255,255,255,0.05); border:1px solid rgba(184,144,42,0.3);
+      border-radius:9px; color:#ffd070; font-family:'Lato',sans-serif; font-size:1rem;
+      outline:none; transition:border-color 0.25s; text-align:center; letter-spacing:0.1em;
+    }
+    .admin-overlay-input:focus { border-color:var(--gold); }
+    .admin-overlay-btn {
+      width:100%; padding:13px;
+      background:linear-gradient(135deg,#b8902a,#8a6a10);
+      color:white; border:none; border-radius:9px;
+      font-family:'Cormorant Garamond',serif; font-size:1.1rem; font-style:italic;
+      cursor:pointer; transition:all 0.2s;
+      box-shadow:0 4px 20px rgba(184,144,42,0.3);
+    }
+    .admin-overlay-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(184,144,42,0.45); }
+    .admin-overlay-error { margin-top:12px; color:#ff9999; font-size:0.84rem; min-height:20px; }
+
+    /* ================================================================
        LOGIN SCREEN
     ================================================================ */
     #loginScreen {
@@ -636,6 +677,20 @@
 <body>
 
 <!-- ================================================================
+     ADMIN LOGIN OVERLAY — shown when ?admin=true, no prompt() needed
+================================================================ -->
+<div id="adminOverlay">
+  <div class="admin-overlay-card">
+    <span class="admin-overlay-icon">🔐</span>
+    <div class="admin-overlay-title">Admin Access</div>
+    <div class="admin-overlay-sub">Enter your passcode</div>
+    <input type="password" id="adminOverlayInput" class="admin-overlay-input" placeholder="••••••••" autocomplete="off"/>
+    <button class="admin-overlay-btn" onclick="submitAdminOverlay()">Enter 🔓</button>
+    <div class="admin-overlay-error" id="adminOverlayError"></div>
+  </div>
+</div>
+
+<!-- ================================================================
      LOGIN SCREEN
 ================================================================ -->
 <div id="loginScreen">
@@ -872,23 +927,25 @@
         <div class="her-photo-label">and this is the reason for all of it 🌹</div>
 
         <!-- ✏️ Uncomment below & set src to her photo URL or "laiba.jpg" -->
-        <!--
+      
         <div class="her-photo-frame">
-          <img src="laiba.jpg" alt="Laiba 💖" class="her-photo-img"/>
+          <img src="pic_add.jpeg" alt="Laiba 💖" class="her-photo-img"/>
           <div class="her-photo-glow"></div>
         </div>
         <div class="her-photo-caption">
           <em>Laiba.</em><br>
           <span>my favourite person in the world 💖</span>
         </div>
-        -->
+        
 
         <!-- PLACEHOLDER — delete this once you add her photo above -->
+        <!--
         <div class="her-photo-placeholder" id="photoPlaceholder">
           <div class="php-icon">🌸</div>
           <div class="php-text">her photo goes here</div>
           <div class="php-hint">find "HER PHOTO" in the code → uncomment → add her image</div>
-        </div>
+        </div> -->
+        
       </div>
 
     </div>
@@ -969,7 +1026,7 @@
 const HER_EMAIL  = "chelaiba123@gmail.com";   // ← change to her actual email
 // ✏️ Passcode = the starry night app name she used that night
 const HER_PASS   = "SkyView";              // ← the stargazing app you used that night
-const ADMIN_PASS = "admin123";           // ← your secret admin passcode
+const ADMIN_PASS = "myadmin123";           // ← your secret admin passcode
 
 /* ================================================================
    FIREBASE SETUP
@@ -986,15 +1043,16 @@ const ADMIN_PASS = "admin123";           // ← your secret admin passcode
 
    ✏️ PASTE YOUR CONFIG HERE:
 ================================================================ */
-const firebaseConfig = {
-  apiKey: "AIzaSyDoxdnJxRenkTKE-oGoOtE6GpkM30NurYI",
-  authDomain: "my-project-cb2f0.firebaseapp.com",
-  projectId: "my-project-cb2f0",
-  storageBucket: "my-project-cb2f0.firebasestorage.app",
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDoxdnJxRenkTKE-oGoOtE6GpkM30NurYI",
+  authDomain:        "my-project-cb2f0.firebaseapp.com",
+  databaseURL:       "https://my-project-cb2f0-default-rtdb.firebaseio.com",
+  projectId:         "my-project-cb2f0",
+  storageBucket:     "my-project-cb2f0.firebasestorage.app",
   messagingSenderId: "1042500423184",
-  appId: "1:1042500423184:web:6c6e9a74a57813717b4495"
+  appId:             "1:1042500423184:web:6c6e9a74a57813717b4495"
 };
-  
+
 // Firebase will be initialized after login
 let db = null;
 let fbRef = null;
@@ -1780,6 +1838,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (le) le.addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('loginPass').focus(); });
   if (lp) lp.addEventListener('keydown', e => { if(e.key==='Enter') attemptLogin(); });
 
+  // Admin overlay Enter key
+  const ai = document.getElementById('adminOverlayInput');
+  if (ai) ai.addEventListener('keydown', e => { if(e.key==='Enter') submitAdminOverlay(); });
+
   // Admin reply Enter key
   const ar = document.getElementById('admReplyInput');
   if (ar) ar.addEventListener('keydown', e => { if(e.key==='Enter') sendAdminReply(); });
@@ -1829,36 +1891,44 @@ function launchFireworks() {
 }
 
 /* ================================================================
-   ADMIN MODE
-   Visit yoursite.com?admin=true
-   → prompts for YOUR admin passcode only
-   → skips Laiba's login entirely
-   → goes straight into the site with the Admin tab visible
+   ADMIN MODE — uses an on-screen overlay instead of prompt()
+   Visit yoursite.com?admin=true → overlay appears → enter passcode
+   → bypasses login → opens straight on Admin tab
 ================================================================ */
 let isAdmin = false;
 
 function checkAdminMode() {
   if (new URLSearchParams(window.location.search).get('admin') !== 'true') return;
-
-  const entered = prompt("🔐 Enter your admin passcode:");
-
-  if (!entered || entered.trim() !== ADMIN_PASS) {
-    if (entered !== null) alert("Wrong passcode. Loading normally.");
-    return;
-  }
-
-  // ✅ Correct — bypass login, go straight in as admin
-  isAdmin = true;
+  // Immediately hide the login screen so it doesn't cover the overlay
   document.getElementById('loginScreen').classList.add('gone');
-  document.getElementById('tabBar').classList.add('show');
-  document.getElementById('appShell').classList.add('show');
-  initFirebase();
-  initMainPetals();
-  revealAdminTab();
-  loadYourRepliesToChat();
+  // Show the admin passcode overlay
+  document.getElementById('adminOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('adminOverlayInput').focus(), 150);
+}
 
-  // Small delay so DOM is fully painted before switching tab
-  setTimeout(() => window.switchTab('admin'), 150);
+function submitAdminOverlay() {
+  const val = document.getElementById('adminOverlayInput').value.trim();
+  const err = document.getElementById('adminOverlayError');
+
+  if (val === ADMIN_PASS) {
+    // ✅ Correct
+    document.getElementById('adminOverlay').classList.remove('show');
+    isAdmin = true;
+    document.getElementById('loginScreen').classList.add('gone');
+    document.getElementById('tabBar').classList.add('show');
+    document.getElementById('appShell').classList.add('show');
+    initFirebase();
+    initMainPetals();
+    revealAdminTab();
+    loadYourRepliesToChat();
+    setTimeout(() => window.switchTab('admin'), 150);
+  } else {
+    // ❌ Wrong
+    err.textContent = 'Wrong passcode. Try again.';
+    document.getElementById('adminOverlayInput').value = '';
+    document.getElementById('adminOverlayInput').focus();
+    setTimeout(() => { err.textContent = ''; }, 2500);
+  }
 }
 
 function revealAdminTab() {
