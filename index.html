@@ -882,27 +882,27 @@
         <!-- ✏️ Uncomment below & set src to her photo URL or "laiba.jpg" -->
         
         <div class="her-photo-frame">
-          <img src="pic_add.jpg" alt="Laiba 💖" class="her-photo-img"/>
+          <img src="pic_add.jpeg" alt="Laiba 💖" class="her-photo-img"/>
           <div class="her-photo-glow"></div>
-        </div>
+        </div>-->
+
         <div class="her-photo-caption">
           <em>Laiba.</em><br>
           <span>my favourite person in the world 💖</span>
         </div>
         
-
         <!-- PLACEHOLDER — delete this once you add her photo above -->
         <!--
         <div class="her-photo-placeholder" id="photoPlaceholder">
           <div class="php-icon">🌸</div>
           <div class="php-text">her photo goes here</div>
           <div class="php-hint">find "HER PHOTO" in the code → uncomment → add her image</div>
-        </div>
+        </div>-->
       </div>
 
     </div>
   </div>
-      -->
+
   <!-- PAGE: ADMIN DASHBOARD — only visible to you -->
   <div class="page" id="page-admin">
     <div class="page-inner">
@@ -1826,23 +1826,36 @@ function launchFireworks() {
 
 /* ================================================================
    ADMIN MODE
-   Visit yoursite.com?admin=true → enter admin passcode
-   → Admin tab appears in the nav bar
-   → Full two-way conversation + game log inside the tab
+   Visit yoursite.com?admin=true
+   → prompts for YOUR admin passcode only
+   → skips Laiba's login entirely
+   → goes straight into the site with the Admin tab visible
 ================================================================ */
 let isAdmin = false;
 
 function checkAdminMode() {
-  if (new URLSearchParams(window.location.search).get('admin') === 'true') {
-    const entered = prompt("🔐 Enter your admin passcode:");
-    if (entered && entered.trim() === ADMIN_PASS) {
-      isAdmin = true;
-      // After login animation runs, reveal the admin tab
-      // (we check isAdmin in triggerUnlockAnimation's callback)
-    } else if (entered !== null) {
-      alert("Wrong passcode. Loading normally.");
-    }
+  if (new URLSearchParams(window.location.search).get('admin') !== 'true') return;
+
+  const entered = prompt("🔐 Enter your admin passcode:");
+
+  // Wrong or cancelled — just load normally
+  if (!entered || entered.trim() !== ADMIN_PASS) {
+    if (entered !== null) alert("Wrong passcode. Loading normally.");
+    return;
   }
+
+  // ✅ Correct — bypass login, go straight in as admin
+  isAdmin = true;
+  document.getElementById('loginScreen').classList.add('gone');
+  document.getElementById('tabBar').classList.add('show');
+  document.getElementById('appShell').classList.add('show');
+  initFirebase();
+  initMainPetals();
+  revealAdminTab();
+  loadYourRepliesToChat();
+
+  // Auto-open the admin tab
+  setTimeout(() => switchTab('admin'), 100);
 }
 
 function revealAdminTab() {
