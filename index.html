@@ -701,15 +701,13 @@
      TAB BAR
 ================================================================ -->
 <div id="tabBar">
-  <!-- ✏️ EDIT: Tab labels and icons -->
-  <button class="tab-btn active" onclick="switchTab('home')"    id="tab-home">    <span class="tab-icon">🏠</span>Home</button>
-  <button class="tab-btn"        onclick="switchTab('letter')"  id="tab-letter">  <span class="tab-icon">💌</span>Letter</button>
-  <button class="tab-btn"        onclick="switchTab('reasons')" id="tab-reasons"> <span class="tab-icon">💖</span>Reasons</button>
-  <button class="tab-btn"        onclick="switchTab('game')"    id="tab-game">    <span class="tab-icon">🎮</span>Game</button>
-  <button class="tab-btn"        onclick="switchTab('chat')"    id="tab-chat">    <span class="tab-icon">💬</span>Chat</button>
-  <button class="tab-btn"        onclick="switchTab('promise')" id="tab-promise"> <span class="tab-icon">🌹</span>Promise</button>
-  <!-- Admin tab: hidden by default, revealed only when isAdmin=true -->
-  <button class="tab-btn" onclick="switchTab('admin')" id="tab-admin" style="display:none;">🔐 Admin</button>
+  <button class="tab-btn active" onclick="window.switchTab('home')"    id="tab-home">    <span class="tab-icon">🏠</span>Home</button>
+  <button class="tab-btn"        onclick="window.switchTab('letter')"  id="tab-letter">  <span class="tab-icon">💌</span>Letter</button>
+  <button class="tab-btn"        onclick="window.switchTab('reasons')" id="tab-reasons"> <span class="tab-icon">💖</span>Reasons</button>
+  <button class="tab-btn"        onclick="window.switchTab('game')"    id="tab-game">    <span class="tab-icon">🎮</span>Game</button>
+  <button class="tab-btn"        onclick="window.switchTab('chat')"    id="tab-chat">    <span class="tab-icon">💬</span>Chat</button>
+  <button class="tab-btn"        onclick="window.switchTab('promise')" id="tab-promise"> <span class="tab-icon">🌹</span>Promise</button>
+  <button class="tab-btn"        onclick="window.switchTab('admin')"   id="tab-admin" style="display:none;">🔐 Admin</button>
 </div>
 
 <!-- ================================================================
@@ -725,7 +723,7 @@
       <h1 class="hero-h1">For you,<br><em>my everything</em></h1>
       <!-- ✏️ EDIT: Opening message -->
       <p class="hero-p">I built this just for you — a little world made of words, games, and all the things I never say loudly enough. Welcome, Laiba.</p>
-      <button class="hero-cta" onclick="switchTab('letter')">Start reading 💌</button>
+      <button class="hero-cta" onclick="window.switchTab('letter')">Start reading 💌</button>
     </div>
   </div>
 
@@ -764,12 +762,6 @@
       </div>
 
     </div>
-  </div>
-
-  <!-- Lightbox for her images -->
-  <div id="imgLightbox" onclick="closeLightbox()">
-    <span class="lb-close">✕</span>
-    <img id="lbImg" src="" alt=""/>
   </div>
 
   <!-- PAGE: REASONS -->
@@ -880,24 +872,23 @@
         <div class="her-photo-label">and this is the reason for all of it 🌹</div>
 
         <!-- ✏️ Uncomment below & set src to her photo URL or "laiba.jpg" -->
-        
+        <!--
         <div class="her-photo-frame">
-          <img src="pic_add.jpeg" alt="Laiba 💖" class="her-photo-img"/>
+          <img src="laiba.jpg" alt="Laiba 💖" class="her-photo-img"/>
           <div class="her-photo-glow"></div>
-        </div>-->
-
+        </div>
         <div class="her-photo-caption">
           <em>Laiba.</em><br>
           <span>my favourite person in the world 💖</span>
         </div>
-        
+        -->
+
         <!-- PLACEHOLDER — delete this once you add her photo above -->
-        <!--
         <div class="her-photo-placeholder" id="photoPlaceholder">
           <div class="php-icon">🌸</div>
           <div class="php-text">her photo goes here</div>
           <div class="php-hint">find "HER PHOTO" in the code → uncomment → add her image</div>
-        </div>-->
+        </div>
       </div>
 
     </div>
@@ -958,6 +949,12 @@
   <button class="rx-close" id="rxClose">Continue 💖</button>
 </div>
 
+<!-- Lightbox for her images — at body level so it's never clipped -->
+<div id="imgLightbox" onclick="closeLightbox()">
+  <span class="lb-close">✕</span>
+  <img id="lbImg" src="" alt=""/>
+</div>
+
 <canvas id="fireworks"></canvas>
 
 <!-- ================================================================
@@ -972,7 +969,7 @@
 const HER_EMAIL  = "chelaiba123@gmail.com";   // ← change to her actual email
 // ✏️ Passcode = the starry night app name she used that night
 const HER_PASS   = "SkyView";              // ← the stargazing app you used that night
-const ADMIN_PASS = "admin_khasnen";           // ← your secret admin passcode
+const ADMIN_PASS = "admin123";           // ← your secret admin passcode
 
 /* ================================================================
    FIREBASE SETUP
@@ -997,7 +994,7 @@ const firebaseConfig = {
   messagingSenderId: "1042500423184",
   appId: "1:1042500423184:web:6c6e9a74a57813717b4495"
 };
-
+  
 // Firebase will be initialized after login
 let db = null;
 let fbRef = null;
@@ -1059,8 +1056,7 @@ function getLocalResponses() {
 function clearResponses() {
   if (!confirm("Clear all saved responses?")) return;
   localStorage.removeItem("laiba_responses");
-  // ✏️ COPILOT HINT: To also clear Firebase, add: remove(fbRef(db, 'responses'));
-  renderAdmin();
+  renderAdminPage();
 }
 
 /* ================================================================
@@ -1083,8 +1079,7 @@ function attemptLogin() {
   }
 }
 
-document.getElementById('loginEmail').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('loginPass').focus(); });
-document.getElementById('loginPass').addEventListener('keydown',  e => { if(e.key==='Enter') attemptLogin(); });
+
 
 /* ================================================================
    UNLOCK ANIMATION — cinematic burst on login success
@@ -1290,18 +1285,15 @@ function typewriteLine(el, text, speed = 28) {
    FAKE LOADING SCREEN
    ✏️ COPILOT HINT: fakeLoad(messages) shows a loading sequence
 ================================================================ */
-function fakeLoad(messages) {
-  return new Promise(async resolve => {
-    for (const msg of messages) {
-      const div = document.createElement('div');
-      div.className = 'game-line load';
-      gameOutput.appendChild(div);
-      gameOutput.scrollTop = gameOutput.scrollHeight;
-      await typewriteLine(div, msg, 22);
-      await sleep(msg.includes('100%') ? 300 : 180);
-    }
-    resolve();
-  });
+async function fakeLoad(messages) {
+  for (const msg of messages) {
+    const div = document.createElement('div');
+    div.className = 'game-line load';
+    gameOutput.appendChild(div);
+    gameOutput.scrollTop = gameOutput.scrollHeight;
+    await typewriteLine(div, msg, 22);
+    await sleep(msg.includes('100%') ? 300 : 180);
+  }
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -1752,10 +1744,12 @@ function sendMessage() {
   saveResponse('chat', txt);       // 💾 save her message
   addChatMsg(txt, 'her');
   inp.value = '';
-  // Flash save indicator
+  // Flash save indicator green then back to original
   const si = document.getElementById('saveIndicator');
-  si.style.color = '#2ecc71';
-  setTimeout(() => si.style.color = '', 2000);
+  if (si) {
+    si.style.color = '#2ecc71';
+    setTimeout(() => { si.style.color = '#a06070'; }, 2000);
+  }
 
   setTimeout(() => {
     addChatMsg(autoResponses[chatRi % autoResponses.length], 'him');
@@ -1779,6 +1773,16 @@ function herQuickReply(text) {
 document.addEventListener('DOMContentLoaded', () => {
   const ci = document.getElementById('chatInput');
   if (ci) ci.addEventListener('keydown', e => { if(e.key==='Enter') sendMessage(); });
+
+  // Login keyboard shortcuts
+  const le = document.getElementById('loginEmail');
+  const lp = document.getElementById('loginPass');
+  if (le) le.addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('loginPass').focus(); });
+  if (lp) lp.addEventListener('keydown', e => { if(e.key==='Enter') attemptLogin(); });
+
+  // Admin reply Enter key
+  const ar = document.getElementById('admReplyInput');
+  if (ar) ar.addEventListener('keydown', e => { if(e.key==='Enter') sendAdminReply(); });
 });
 
 /* ================================================================
@@ -1838,7 +1842,6 @@ function checkAdminMode() {
 
   const entered = prompt("🔐 Enter your admin passcode:");
 
-  // Wrong or cancelled — just load normally
   if (!entered || entered.trim() !== ADMIN_PASS) {
     if (entered !== null) alert("Wrong passcode. Loading normally.");
     return;
@@ -1854,8 +1857,8 @@ function checkAdminMode() {
   revealAdminTab();
   loadYourRepliesToChat();
 
-  // Auto-open the admin tab
-  setTimeout(() => switchTab('admin'), 100);
+  // Small delay so DOM is fully painted before switching tab
+  setTimeout(() => window.switchTab('admin'), 150);
 }
 
 function revealAdminTab() {
@@ -2016,31 +2019,33 @@ function loadYourRepliesToChat() {
 }
 
 /* ================================================================
-   BOOT
+   BOOT — everything runs after DOM is ready
 ================================================================ */
-checkAdminMode();
+window.addEventListener('DOMContentLoaded', () => {
 
-// Initialize game elements when DOM ready
-window.addEventListener('load', () => {
+  // Grab game elements
   gameOutput  = document.getElementById('gameOutput');
   gameChoices = document.getElementById('gameChoices');
   updateHeartMeter(0);
-});
 
-// The switchTab function is already defined above — patch it to init game + admin
-const _origSwitch = switchTab;
-window.switchTab = function(name) {
-  _origSwitch(name);
-  if (name === 'game' && !gameStarted) {
-    gameStarted = true;
-    gameOutput  = document.getElementById('gameOutput');
-    gameChoices = document.getElementById('gameChoices');
-    setTimeout(() => goToStep(0), 500);
-  }
-  if (name === 'admin') {
-    renderAdminPage();
-  }
-};
+  // Patch switchTab to also handle game init + admin render
+  const _origSwitch = switchTab;
+  window.switchTab = function(name) {
+    _origSwitch(name);
+    if (name === 'game' && !gameStarted) {
+      gameStarted = true;
+      gameOutput  = document.getElementById('gameOutput');
+      gameChoices = document.getElementById('gameChoices');
+      setTimeout(() => goToStep(0), 500);
+    }
+    if (name === 'admin') {
+      renderAdminPage();
+    }
+  };
+
+  // Check admin mode last — after switchTab is patched
+  checkAdminMode();
+});
 </script>
 </body>
 </html>
